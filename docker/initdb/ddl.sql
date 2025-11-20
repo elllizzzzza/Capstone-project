@@ -44,7 +44,7 @@ CREATE TABLE administrators (
 
 CREATE TABLE instructors (
     user_id         INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    about           TEXT,
+    bio           TEXT,
     profession      VARCHAR(200),
     experience      INT
 );
@@ -127,7 +127,7 @@ CREATE TABLE borrow_records (
 
 CREATE TABLE rooms (
     room_id     SERIAL PRIMARY KEY,
-    room_number INT NOT NULL,
+    room_number INT NOT NULL UNIQUE,
     floor       INT NOT NULL,
     capacity    INT NOT NULL,
     type        room_type DEFAULT 'other',
