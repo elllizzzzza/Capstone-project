@@ -15,9 +15,10 @@ INSERT INTO enrollments (student_id, course_id)
 VALUES (123, 10);
 
 -- Get lessons for a course the student is taking
-SELECT lesson_id, title, duration, is_completed
-FROM lessons
-WHERE course_id = 10;
+SELECT l.lesson_id, l.title, l.duration, l.is_completed
+FROM lessons l
+JOIN enrollments e ON e.course_id = l.course_id
+WHERE l.course_id = 10 AND e.student_id = 123;
 
 -- Mark a lesson as completed
 UPDATE lessons
