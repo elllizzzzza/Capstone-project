@@ -16,7 +16,7 @@ import java.util.List;
 public class Course {
     private Long courseId;
     private String courseName;
-    private CourseType type; //???
+    private List<CourseType> type;
     private String category;
     private Instructor instructor;
     private List<Lesson> lessons;

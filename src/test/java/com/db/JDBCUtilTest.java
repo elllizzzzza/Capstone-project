@@ -4,6 +4,7 @@ import org.junit.jupiter.api.*;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +30,7 @@ class JDBCUtilTest {
     void execute_WithArgs_ShouldInsertNewRow() {
         db.execute("INSERT INTO users VALUES (?,?)", 4, "John");
 
-        String name = db.findOne(
+         Optional<String> name = db.findOne(
                 "SELECT name FROM users WHERE id=?",
                 rs -> {
                     try {
@@ -41,7 +42,7 @@ class JDBCUtilTest {
                 4
         );
 
-        assertEquals("John", name);
+        assertEquals("John", name.get());
     }
 
     @Test
@@ -59,7 +60,7 @@ class JDBCUtilTest {
             }
         });
 
-        String name = db.findOne(
+        Optional<String> name = db.findOne(
                 "SELECT name FROM users WHERE id=?",
                 rs -> {
                     try {
@@ -71,12 +72,12 @@ class JDBCUtilTest {
                 5
         );
 
-        assertEquals("Bob", name);
+        assertEquals("Bob", name.get());
     }
 
     @Test
     void findOne_ShouldReturnSingleRecord() {
-        String name = db.findOne(
+         Optional<String> name = db.findOne(
                 "SELECT name FROM users WHERE id=?",
                 rs -> {
                     try {
@@ -88,12 +89,12 @@ class JDBCUtilTest {
                 1
         );
 
-        assertEquals("Anna", name);
+        assertEquals("Anna", name.get());
     }
 
     @Test
     void findOne_WhenNoResults_ShouldReturnNull() {
-        String name = db.findOne(
+        Optional<String> name = db.findOne(
                 "SELECT name FROM users WHERE id=?",
                 rs -> {
                     try {
@@ -105,7 +106,7 @@ class JDBCUtilTest {
                 99
         );
 
-        assertNull(name);
+        assertTrue(name.isEmpty());
     }
 
     @Test
