@@ -8,7 +8,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
 public class CustomDataSource implements DataSource {
-    private Connection connection;
+    private final Connection connection;
 
     public CustomDataSource(Connection connection) {
         this.connection = connection;
