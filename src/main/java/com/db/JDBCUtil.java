@@ -29,7 +29,7 @@ public class JDBCUtil {
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing: " + query, e);
         }
     }
 
