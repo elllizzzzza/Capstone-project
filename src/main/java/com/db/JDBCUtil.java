@@ -1,5 +1,6 @@
 package com.db;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -7,18 +8,26 @@ import java.util.function.Function;
 
 public class JDBCUtil {
 
-    private final String url;
-    private final String username;
-    private final String password;
+//    private final String url;
+//    private final String username;
+//    private final String password;
 
-    public JDBCUtil(String url, String username, String password) {
-        this.url = url;
-        this.username = username;
-        this.password = password;
+    private DataSource ds ;
+//    public JDBCUtil(String url, String username, String password) {
+//        this.url = url;
+//        this.username = username;
+//        this.password = password;
+//    }
+
+    public JDBCUtil(DataSource ds){
+        this.ds = ds;
     }
 
+//    private Connection getConnection() throws SQLException {
+//        return DriverManager.getConnection(url, username, password);
+//    }
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, username, password);
+        return ds.getConnection();
     }
 
     public void execute(String query, Object... args) {
