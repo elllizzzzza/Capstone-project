@@ -1,5 +1,6 @@
 package com.educationalSystem.service;
 
+import com.educationalSystem.config.BookConfig;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.repository.BookRepository;
 import org.springframework.stereotype.Service;
@@ -10,9 +11,11 @@ import java.util.Optional;
 @Service
 public class BookServiceImpl implements BookService {
     private final BookRepository repository;
+    private final BookConfig bookConfig;
 
-    public BookServiceImpl(BookRepository repository) {
+    public BookServiceImpl(BookRepository repository, BookConfig bookConfig) {
         this.repository = repository;
+        this.bookConfig = bookConfig;
     }
 
     @Override
@@ -48,5 +51,11 @@ public class BookServiceImpl implements BookService {
     @Override
     public boolean deleteBook(Long id) {
         return repository.deleteById(id);
+    }
+
+    public void printCategories() {
+        for (String cat : bookConfig.getCategories()) {
+            System.out.println(cat);
+        }
     }
 }

@@ -71,7 +71,23 @@
             <artifactId>spring-context</artifactId>
             <version>7.0.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+            <version>4.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <version>4.0.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
         <build>
@@ -92,7 +108,14 @@
                         <target>25</target>
                     </configuration>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>4.0.0</version>
+                </plugin>
             </plugins>
         </build>
+
 
 </project>
