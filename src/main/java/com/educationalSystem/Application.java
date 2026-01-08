@@ -1,17 +1,19 @@
 package com.educationalSystem;
 
-
 import com.educationalSystem.entity.parts.Book;
-import com.educationalSystem.repository.BookRepoImpl;
 import com.educationalSystem.service.BookService;
 import com.educationalSystem.service.BookServiceImpl;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-public class Main {
+public class Application {
     public static void main(String[] args) {
-        BookService bookService = new BookServiceImpl(new BookRepoImpl());
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+
+        BookService bookService = context.getBean(BookServiceImpl.class);
 
         Book book1 = new Book(1L, "Effective Java", "Joshua Bloch", "English", "Programming", true);
         Book book2 = new Book(2L, "Clean Code", "Robert C. Martin", "English", "Programming", true);
+
         bookService.createBook(book1);
         bookService.createBook(book2);
 
@@ -30,3 +32,4 @@ public class Main {
         bookService.getAllBooks().forEach(System.out::println);
     }
 }
+
