@@ -1,7 +1,7 @@
 package com.educationalSystem.enums;
 
 public enum Role {
-    ADMINISTRTATOR,
+    ADMINISTRATOR,
     INSTRUCTOR,
     LIBRARIAN,
     STUDENT;
