@@ -1,6 +1,8 @@
 package com.educationalSystem;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.AbstractEnvironment;
@@ -16,6 +18,8 @@ import java.util.stream.StreamSupport;
 @Component
 public class MyRunner implements CommandLineRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(MyRunner.class);
+
     private final ApplicationContext ctx;
     private final Environment env;
 
@@ -26,7 +30,7 @@ public class MyRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("=== All Environment Properties ===");
+        log.info("=== All Environment Properties ===");
         Properties props = new Properties();
         MutablePropertySources propSrcs = ((AbstractEnvironment) env).getPropertySources();
         StreamSupport.stream(propSrcs.spliterator(), false)
@@ -35,12 +39,14 @@ public class MyRunner implements CommandLineRunner {
                 .flatMap(Arrays::<String>stream)
                 .forEach(propName -> props.setProperty(propName, env.getProperty(propName)));
 
-        props.forEach((key, value) -> System.out.println(key + " = " + value));
+        props.forEach((key, value) -> log.info("{} = {}", key, value));
 
-        System.out.println("=== End of Environment Properties ===");
+        log.info("=== End of Environment Properties ===");
 
         System.out.println("\n=== All Beans ===");
         Arrays.stream(ctx.getBeanDefinitionNames()).forEach(System.out::println);
+
+        log.info("=== All Beans ===");
+        Arrays.stream(ctx.getBeanDefinitionNames()).forEach(log::info);
     }
 }
-
