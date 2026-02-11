@@ -3,9 +3,11 @@ package com.educationalSystem;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.service.BookService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class BookRunner implements CommandLineRunner {
 
     private final BookService bookService;
