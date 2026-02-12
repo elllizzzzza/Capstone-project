@@ -38,7 +38,7 @@ public class JDBCUtil {
             ps.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error executing: " + query, e);
         }
     }
 
@@ -54,14 +54,20 @@ public class JDBCUtil {
         }
     }
 
-    public <T> T findOne(String query, Function<ResultSet, T> mapper, Object... args) {
+    public <T> Optional<T> findOne(
+            String query,
+            Function<ResultSet, T> mapper,
+            Object... args
+    ) {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
 
             fill(ps, args);
             ResultSet rs = ps.executeQuery();
 
-            if (!rs.next()) return null;
+            if (!rs.next()) {
+                return Optional.empty();
+            }
 
             T result = mapper.apply(rs);
 
@@ -69,7 +75,7 @@ public class JDBCUtil {
                 throw new IllegalStateException("Query returned more than 1 row");
             }
 
-            return result;
+            return Optional.of(result);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

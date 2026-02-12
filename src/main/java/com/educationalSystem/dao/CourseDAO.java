@@ -9,7 +9,9 @@ import com.educationalSystem.enums.CourseType;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class CourseDAO {
 
@@ -20,8 +22,8 @@ public class CourseDAO {
     }
 
 
-    public Course findById(Long id) {
-        Course course = db.findOne(
+    public Optional<Course> findById(Long id) {
+        Optional<Course> course = db.findOne(
                 """
                 SELECT c.course_id, c.course_name, c.type, c.category,
                        c.satisfaction_factor, c.review_number,
@@ -40,7 +42,7 @@ public class CourseDAO {
         if (course == null) return null;
 
         List<Lesson> lessons = findLessonsByCourseId(id);
-        course.setLessons(lessons);
+        course.get().setLessons(lessons);
 
         return course;
     }
@@ -94,7 +96,7 @@ public class CourseDAO {
 
             course.setLevel(CourseLevel.valueOf(rs.getString("level")));
 
-            course.setType(CourseType.valueOf(rs.getString("type")));
+            course.setType(Collections.singletonList(CourseType.valueOf(rs.getString("type"))));
 
             course.setInstructor(instructor);
 
