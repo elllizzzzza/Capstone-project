@@ -13,4 +13,5 @@ public interface BookService {
     List<Book> getBooksByAuthor(String author);
     void updateBook(Book book);
     boolean deleteBook(Long id);
+    void printCategories();
 }
