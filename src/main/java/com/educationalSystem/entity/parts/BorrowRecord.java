@@ -21,7 +21,7 @@ public class BorrowRecord {
     @ManyToOne
     private Student student;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Book book;
 
     private LocalDate borrowDate;

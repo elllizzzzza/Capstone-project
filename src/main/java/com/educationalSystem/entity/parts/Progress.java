@@ -14,11 +14,11 @@ import java.util.List;
 public class Progress {
     private double completionRate;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "completed_lessons",
-            joinColumns = @JoinColumn(name = "enrollment_id")
+    @ManyToMany
+    @JoinTable(
+            name= "completed_lessons",
+            joinColumns = @JoinColumn(name = "enrollment_id"),
+            inverseJoinColumns = @JoinColumn(name = "lesson_id")
     )
-    @Column(name = "lesson_id")
     private List<Lesson> completedLessons;
 }

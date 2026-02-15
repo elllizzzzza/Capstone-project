@@ -6,7 +6,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Generated;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -23,5 +22,4 @@ public class Book {
     private String author;
     private String language;
     private String genre;
-    private Boolean available;
 }
