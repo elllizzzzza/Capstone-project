@@ -35,6 +35,6 @@ public class Enrollment {
     @Column(nullable = false)
     private LocalDate enrollmentDate;
 
-    @Embedded
+    @OneToOne(mappedBy = "enrollment", cascade = CascadeType.ALL)
     private Progress progress;
 }
