@@ -1,6 +1,8 @@
 package com.educationalSystem.entity.parts;
 
+import com.educationalSystem.entity.user.Instructor;
 import com.educationalSystem.entity.user.Student;
+import com.educationalSystem.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,10 +26,16 @@ public class RoomBooking {
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    private Instructor instructor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private Room room;
 
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
     private LocalDateTime canceledAt;
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status = BookingStatus.ACTIVE;
 }

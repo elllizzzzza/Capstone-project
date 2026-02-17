@@ -22,4 +22,6 @@ public class Book {
     private String author;
     private String language;
     private String genre;
+    private int totalCopies;
+    private int availableCopies;
 }

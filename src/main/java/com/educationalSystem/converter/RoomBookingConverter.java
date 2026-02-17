@@ -18,6 +18,7 @@ public class RoomBookingConverter implements Converter<RoomBooking, RoomBookingD
         dto.setStartTime(entity.getStartTime());
         dto.setEndTime(entity.getEndTime());
         dto.setCanceledAt(entity.getCanceledAt());
+        dto.setStatus(entity.getStatus());
 
         return dto;
     }
@@ -25,7 +26,6 @@ public class RoomBookingConverter implements Converter<RoomBooking, RoomBookingD
     @Override
     public RoomBooking convertToEntity(RoomBookingDTO dto, RoomBooking entity) {
         if (dto == null) return null;
-
         entity.setDate(dto.getDate());
         entity.setStartTime(dto.getStartTime());
         entity.setEndTime(dto.getEndTime());

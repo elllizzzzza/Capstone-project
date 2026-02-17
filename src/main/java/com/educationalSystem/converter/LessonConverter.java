@@ -26,7 +26,6 @@ public class LessonConverter implements Converter<Lesson, LessonDTO> {
         entity.setTitle(dto.getTitle());
         entity.setDurationMinutes(dto.getDurationMinutes());
 
-        // Course assignment in service layer
         return entity;
     }
 }

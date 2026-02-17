@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,7 +19,7 @@ public class Progress {
 
     private double completionRate;
 
-    @OneToMany
+    @OneToOne
     @JoinColumn(name = "enrollment_id")
     private Enrollment enrollment;
 
