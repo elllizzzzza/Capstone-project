@@ -8,7 +8,7 @@ import com.educationalSystem.entity.user.Student;
 import com.educationalSystem.exception.BusinessException;
 import com.educationalSystem.exception.ResourceNotFoundException;
 import com.educationalSystem.repository.*;
-import com.educationalSystem.dto.ReportDTO;
+import com.educationalSystem.dto.response.ReportDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
