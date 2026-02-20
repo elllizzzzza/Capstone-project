@@ -38,6 +38,12 @@ public class CourseService {
                 .toList();
     }
 
+    public List<CourseDTO> searchCourses(String keyword) {
+        return courseRepository.findByCourseNameContainingIgnoreCase(keyword).stream()
+                .map(c -> courseConverter.convertToDTO(c, new CourseDTO()))
+                .toList();
+    }
+
     @Transactional
     public CourseDTO createCourse(CourseDTO dto) {
         Instructor instructor = instructorRepository.findById(dto.getInstructorId())

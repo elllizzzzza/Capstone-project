@@ -29,6 +29,18 @@ public class BookService {
         return bookMapper.convertToDTO(book, new BookDTO());
     }
 
+    public List<BookDTO> searchBooks(String keyword) {
+        return bookRepository.findByTitleContainingIgnoreCase(keyword).stream()
+                .map(b -> bookConverter.convertToDTO((Book) b, new BookDTO()))
+                .toList();
+    }
+
+    public List<BookDTO> filterByGenre(String genre) {
+        return bookRepository.findByGenre(genre).stream()
+                .map(b -> bookConverter.convertToDTO(b, new BookDTO()))
+                .toList();
+    }
+
     @Transactional
     public BookDTO addBook(BookDTO dto) {
         Book book = bookMapper.convertToEntity(dto, new Book());
