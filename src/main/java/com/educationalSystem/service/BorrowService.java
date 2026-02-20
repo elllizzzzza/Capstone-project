@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.BorrowRecordConverter;
+import com.educationalSystem.mapper.BorrowRecordMapper;
 import com.educationalSystem.dto.BorrowRecordDTO;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.entity.parts.BorrowRecord;
@@ -23,19 +23,19 @@ public class BorrowService {
     private final BorrowRecordRepository borrowRecordRepository;
     private final StudentRepository studentRepository;
     private final BookRepository bookRepository;
-    private final BorrowRecordConverter borrowRecordConverter;
+    private final BorrowRecordMapper borrowRecordMApper;
 
     private static final int LOAN_DAYS = 14;
 
     public List<BorrowRecordDTO> getBorrowHistoryByStudent(Long studentId) {
         return borrowRecordRepository.findByStudent_Id(studentId).stream()
-                .map(b -> borrowRecordConverter.convertToDTO(b, new BorrowRecordDTO()))
+                .map(b -> borrowRecordMApper.convertToDTO(b, new BorrowRecordDTO()))
                 .toList();
     }
 
     public List<BorrowRecordDTO> getOverdueRecords() {
         return borrowRecordRepository.findOverdue(LocalDate.now()).stream()
-                .map(b -> borrowRecordConverter.convertToDTO(b, new BorrowRecordDTO()))
+                .map(b -> borrowRecordMApper.convertToDTO(b, new BorrowRecordDTO()))
                 .toList();
     }
 
@@ -63,7 +63,7 @@ public class BorrowService {
         record.setDueDate(LocalDate.now().plusDays(LOAN_DAYS));
         borrowRecordRepository.save(record);
 
-        return borrowRecordConverter.convertToDTO(record, new BorrowRecordDTO());
+        return borrowRecordMApper.convertToDTO(record, new BorrowRecordDTO());
     }
 
     @Transactional
@@ -79,7 +79,7 @@ public class BorrowService {
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
 
-        return borrowRecordConverter.convertToDTO(record, new BorrowRecordDTO());
+        return borrowRecordMApper.convertToDTO(record, new BorrowRecordDTO());
     }
 
     @Transactional
@@ -98,7 +98,7 @@ public class BorrowService {
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
 
-        return borrowRecordConverter.convertToDTO(record, new BorrowRecordDTO());
+        return borrowRecordMApper.convertToDTO(record, new BorrowRecordDTO());
     }
 
     public List<ReportDTO> getMostBorrowedBooks() {

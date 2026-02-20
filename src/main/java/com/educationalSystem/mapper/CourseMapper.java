@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.CourseDTO;
 import com.educationalSystem.entity.parts.Course;
@@ -7,7 +7,7 @@ import com.educationalSystem.entity.parts.Review;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CourseConverter implements Converter<Course, CourseDTO> {
+public class CourseMapper implements Converter<Course, CourseDTO> {
 
     @Override
     public CourseDTO convertToDTO(Course entity, CourseDTO dto) {

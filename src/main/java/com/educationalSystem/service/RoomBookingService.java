@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.RoomBookingConverter;
+import com.educationalSystem.mapper.RoomBookingMapper;
 import com.educationalSystem.dto.RoomBookingDTO;
 import com.educationalSystem.entity.parts.Room;
 import com.educationalSystem.entity.parts.RoomBooking;
@@ -25,7 +25,7 @@ public class RoomBookingService {
     private final RoomRepository roomRepository;
     private final StudentRepository studentRepository;
     private final InstructorRepository instructorRepository;
-    private final RoomBookingConverter bookingConverter;
+    private final RoomBookingMapper bookingConverter;
 
     public List<RoomBookingDTO> getBookingsByStudent(Long studentId) {
         return bookingRepository.findByStudent_Id(studentId).stream()

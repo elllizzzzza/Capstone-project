@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.RoomBookingDTO;
 import com.educationalSystem.entity.parts.RoomBooking;
 import org.springframework.stereotype.Component;
 
 @Component
-public class RoomBookingConverter implements Converter<RoomBooking, RoomBookingDTO> {
+public class RoomBookingMapper implements Converter<RoomBooking, RoomBookingDTO> {
 
     @Override
     public RoomBookingDTO convertToDTO(RoomBooking entity, RoomBookingDTO dto) {

@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.ProgressDTO;
 import com.educationalSystem.entity.parts.Lesson;
@@ -6,7 +6,7 @@ import com.educationalSystem.entity.parts.Progress;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProgressConverter implements Converter<Progress, ProgressDTO> {
+public class ProgressMapper implements Converter<Progress, ProgressDTO> {
 
     @Override
     public ProgressDTO convertToDTO(Progress entity, ProgressDTO dto) {

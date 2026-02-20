@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.AdministratorDTO;
 import com.educationalSystem.entity.user.Administrator;
@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AdministratorConverter implements Converter<Administrator, AdministratorDTO> {
+public class AdministratorMapper implements Converter<Administrator, AdministratorDTO> {
 
-    private final UserConverter userConverter;
+    private final UserMapper userMapper;
 
     @Override
     public AdministratorDTO convertToDTO(Administrator entity, AdministratorDTO dto) {
@@ -17,7 +17,7 @@ public class AdministratorConverter implements Converter<Administrator, Administ
             return null;
         }
 
-        userConverter.convertToDTO(entity, dto);
+        userMapper.convertToDTO(entity, dto);
 
         return dto;
     }
@@ -28,7 +28,7 @@ public class AdministratorConverter implements Converter<Administrator, Administ
             return null;
         }
 
-        userConverter.convertToEntity(dto, entity);
+        userMapper.convertToEntity(dto, entity);
 
         return entity;
     }

@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 public interface Converter<E, D> {
 

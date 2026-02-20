@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.RoomConverter;
+import com.educationalSystem.mapper.RoomMapper;
 import com.educationalSystem.dto.RoomDTO;
 import com.educationalSystem.entity.parts.Room;
 import com.educationalSystem.exception.ResourceNotFoundException;
@@ -16,32 +16,32 @@ import java.util.List;
 public class RoomService {
 
     private final RoomRepository roomRepository;
-    private final RoomConverter roomConverter;
+    private final RoomMapper roomMapper;
 
     public List<RoomDTO> getAllRooms() {
         return roomRepository.findAll().stream()
-                .map(r -> roomConverter.convertToDTO(r, new RoomDTO()))
+                .map(r -> roomMapper.convertToDTO(r, new RoomDTO()))
                 .toList();
     }
 
     public RoomDTO getRoomById(Long id) {
         Room room = findOrThrow(id);
-        return roomConverter.convertToDTO(room, new RoomDTO());
+        return roomMapper.convertToDTO(room, new RoomDTO());
     }
 
     @Transactional
     public RoomDTO createRoom(RoomDTO dto) {
-        Room room = roomConverter.convertToEntity(dto, new Room());
+        Room room = roomMapper.convertToEntity(dto, new Room());
         roomRepository.save(room);
-        return roomConverter.convertToDTO(room, new RoomDTO());
+        return roomMapper.convertToDTO(room, new RoomDTO());
     }
 
     @Transactional
     public RoomDTO updateRoom(Long id, RoomDTO dto) {
         Room room = findOrThrow(id);
-        roomConverter.convertToEntity(dto, room);
+        roomMapper.convertToEntity(dto, room);
         roomRepository.save(room);
-        return roomConverter.convertToDTO(room, new RoomDTO());
+        return roomMapper.convertToDTO(room, new RoomDTO());
     }
 
     @Transactional

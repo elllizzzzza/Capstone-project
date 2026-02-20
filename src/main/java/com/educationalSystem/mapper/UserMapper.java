@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.UserDTO;
 import com.educationalSystem.entity.user.User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserConverter implements Converter<User, UserDTO> {
+public class UserMapper implements Converter<User, UserDTO> {
 
     @Override
     public UserDTO convertToDTO(User entity, UserDTO dto) {

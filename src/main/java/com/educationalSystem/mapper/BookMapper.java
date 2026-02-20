@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.BookDTO;
 import com.educationalSystem.entity.parts.Book;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BookConverter implements Converter<Book, BookDTO> {
+public class BookMapper implements Converter<Book, BookDTO> {
 
     @Override
     public BookDTO convertToDTO(Book entity, BookDTO dto) {

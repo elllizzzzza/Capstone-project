@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.EnrollmentDTO;
 import com.educationalSystem.entity.parts.Enrollment;
@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EnrollmentConverter implements Converter<Enrollment, EnrollmentDTO> {
+public class EnrollmentMapper implements Converter<Enrollment, EnrollmentDTO> {
 
     @Override
     public EnrollmentDTO convertToDTO(Enrollment entity, EnrollmentDTO dto) {

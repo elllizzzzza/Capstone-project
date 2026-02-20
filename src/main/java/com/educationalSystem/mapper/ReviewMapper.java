@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.ReviewDTO;
 import com.educationalSystem.entity.parts.Review;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ReviewConverter implements Converter<Review, ReviewDTO> {
+public class ReviewMapper implements Converter<Review, ReviewDTO> {
 
     @Override
     public ReviewDTO convertToDTO(Review entity, ReviewDTO dto) {
