@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.BookConverter;
+import com.educationalSystem.mapper.BookMapper;
 import com.educationalSystem.dto.BookDTO;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.exception.ResourceNotFoundException;
@@ -16,32 +16,32 @@ import java.util.List;
 public class BookService {
 
     private final BookRepository bookRepository;
-    private final BookConverter bookConverter;
+    private final BookMapper bookMapper;
 
     public List<BookDTO> getAllBooks() {
         return bookRepository.findAll().stream()
-                .map(b -> bookConverter.convertToDTO(b, new BookDTO()))
+                .map(b -> bookMapper.convertToDTO(b, new BookDTO()))
                 .toList();
     }
 
     public BookDTO getBookById(Long id) {
         Book book = findOrThrow(id);
-        return bookConverter.convertToDTO(book, new BookDTO());
+        return bookMapper.convertToDTO(book, new BookDTO());
     }
 
     @Transactional
     public BookDTO addBook(BookDTO dto) {
-        Book book = bookConverter.convertToEntity(dto, new Book());
+        Book book = bookMapper.convertToEntity(dto, new Book());
         bookRepository.save(book);
-        return bookConverter.convertToDTO(book, new BookDTO());
+        return bookMapper.convertToDTO(book, new BookDTO());
     }
 
     @Transactional
     public BookDTO updateBook(Long id, BookDTO dto) {
         Book book = findOrThrow(id);
-        bookConverter.convertToEntity(dto, book);
+        bookMapper.convertToEntity(dto, book);
         bookRepository.save(book);
-        return bookConverter.convertToDTO(book, new BookDTO());
+        return bookMapper.convertToDTO(book, new BookDTO());
     }
 
     @Transactional

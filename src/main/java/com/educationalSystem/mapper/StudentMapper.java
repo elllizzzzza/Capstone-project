@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.StudentDTO;
 import com.educationalSystem.entity.parts.BorrowRecord;
@@ -10,15 +10,15 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class StudentConverter implements Converter<Student, StudentDTO> {
+public class StudentMapper implements Converter<Student, StudentDTO> {
 
-    private final UserConverter userConverter;
+    private final UserMapper userMapper;
 
     @Override
     public StudentDTO convertToDTO(Student entity, StudentDTO dto) {
         if (entity == null) return null;
 
-        userConverter.convertToDTO(entity, dto);
+        userMapper.convertToDTO(entity, dto);
 
         dto.setUniversity(entity.getUniversity());
         dto.setUniId(entity.getUniId());
@@ -46,7 +46,7 @@ public class StudentConverter implements Converter<Student, StudentDTO> {
     public Student convertToEntity(StudentDTO dto, Student entity) {
         if (dto == null) return null;
 
-        userConverter.convertToEntity(dto, entity);
+        userMapper.convertToEntity(dto, entity);
 
         entity.setUniversity(dto.getUniversity());
         entity.setUniId(dto.getUniId());

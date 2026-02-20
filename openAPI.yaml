@@ -1,0 +1,2320 @@
+openapi: 3.0.3
+
+info:
+  title: Educational Resource Management System API
+  description: |
+    REST API for managing courses, lessons, library resources, room bookings,
+    and users across Student, Instructor, Librarian, and Administrator roles.
+
+    ## Authentication
+    All endpoints (except `/auth/**`) require a Bearer JWT token in the
+    `Authorization` header. Tokens are obtained via `/api/auth/login` or
+    `/api/auth/register`.
+
+    ## Roles & Access
+    | Role          | Abbreviated tag in descriptions |
+    |---------------|---------------------------------|
+    | Student       | `[STUDENT]`                     |
+    | Instructor    | `[INSTRUCTOR]`                  |
+    | Librarian     | `[LIBRARIAN]`                   |
+    | Administrator | `[ADMIN]`                       |
+
+    ## Pagination
+    All list endpoints that can return large result sets support pagination via:
+    - `page` — zero-based page index (default: 0)
+    - `size` — page size (default: 20, max: 100)
+    - `sort` — field name to sort by (e.g. `sort=courseName`)
+    - `direction` — `asc` or `desc` (default: `asc`)
+
+  version: 1.0.0
+  contact:
+    name: Educational System Team
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+  - url: https://api.educationalsystem.com/api
+    description: Production server
+
+# ─────────────────────────────────────────────
+# Security
+# ─────────────────────────────────────────────
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # ───────────────────────────────────────────
+  # Reusable Parameters
+  # ───────────────────────────────────────────
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Zero-based page index
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+
+    SizeParam:
+      name: size
+      in: query
+      description: Number of items per page (max 100)
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+    SortParam:
+      name: sort
+      in: query
+      description: Field name to sort by
+      schema:
+        type: string
+
+    DirectionParam:
+      name: direction
+      in: query
+      description: Sort direction
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+
+  # ───────────────────────────────────────────
+  # Reusable Schemas
+  # ───────────────────────────────────────────
+  schemas:
+
+    # ── Enums ──────────────────────────────
+    Role:
+      type: string
+      enum: [STUDENT, INSTRUCTOR, LIBRARIAN, ADMINISTRATOR]
+
+    CourseLevel:
+      type: string
+      enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+
+    CourseType:
+      type: string
+      enum: [VIDEO_BASED, TEXT_BASED, AUDIO_BASED, SLIDES, QUIZ, ASSIGNMENTS]
+
+    RoomType:
+      type: string
+      enum: [CLASSROOM, LAB, LECTURE_HALL, SEMINAR_ROOM, EXAM_ROOM]
+
+    BookingStatus:
+      type: string
+      enum: [ACTIVE, CANCELLED, COMPLETED]
+
+    # ── Pagination wrapper ─────────────────
+    PageMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          example: 142
+        totalPages:
+          type: integer
+          example: 8
+
+    # ── Auth ──────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [name, surname, username, email, password, role]
+      properties:
+        name:
+          type: string
+          example: Jane
+        surname:
+          type: string
+          example: Doe
+        username:
+          type: string
+          example: janedoe
+        email:
+          type: string
+          format: email
+          example: jane@uni.edu
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "S3cur3Pass!"
+        role:
+          $ref: '#/components/schemas/Role'
+        university:
+          type: string
+          description: Required when role is STUDENT
+          example: MIT
+        uniId:
+          type: string
+          description: Required when role is STUDENT
+          example: "20210042"
+        about:
+          type: string
+          description: Required when role is INSTRUCTOR
+          example: PhD in Computer Science
+        profession:
+          type: string
+          description: Required when role is INSTRUCTOR
+          example: Software Engineer
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: janedoe
+        password:
+          type: string
+          format: password
+          example: "S3cur3Pass!"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        userId:
+          type: integer
+          format: int64
+          example: 7
+        username:
+          type: string
+          example: janedoe
+        role:
+          $ref: '#/components/schemas/Role'
+
+    # ── User ──────────────────────────────
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 7
+        name:
+          type: string
+          example: Jane
+        surname:
+          type: string
+          example: Doe
+        username:
+          type: string
+          example: janedoe
+        email:
+          type: string
+          format: email
+          example: jane@uni.edu
+        role:
+          $ref: '#/components/schemas/Role'
+        active:
+          type: boolean
+          example: true
+
+    UserPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Course ────────────────────────────
+    CourseRequest:
+      type: object
+      required: [courseName, category, type, level, instructorId]
+      properties:
+        courseName:
+          type: string
+          example: Introduction to Algorithms
+        category:
+          type: string
+          example: Computer Science
+        type:
+          $ref: '#/components/schemas/CourseType'
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        instructorId:
+          type: integer
+          format: int64
+          example: 3
+
+    CourseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 12
+        courseName:
+          type: string
+          example: Introduction to Algorithms
+        category:
+          type: string
+          example: Computer Science
+        type:
+          $ref: '#/components/schemas/CourseType'
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        instructorId:
+          type: integer
+          format: int64
+          example: 3
+        lessonIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [1, 2, 3]
+        reviewIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [5, 6]
+
+    CoursePageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Lesson ────────────────────────────
+    LessonRequest:
+      type: object
+      required: [title, durationMinutes, courseId]
+      properties:
+        title:
+          type: string
+          example: Big-O Notation
+        durationMinutes:
+          type: integer
+          minimum: 1
+          example: 45
+        courseId:
+          type: integer
+          format: int64
+          example: 12
+
+    LessonDTO:
+      type: object
+      properties:
+        lessonId:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: Big-O Notation
+        durationMinutes:
+          type: integer
+          example: 45
+        courseId:
+          type: integer
+          format: int64
+          example: 12
+
+    # ── Enrollment ────────────────────────
+    EnrollmentDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 99
+        studentId:
+          type: integer
+          format: int64
+          example: 7
+        courseId:
+          type: integer
+          format: int64
+          example: 12
+        enrollmentDate:
+          type: string
+          format: date
+          example: "2025-09-01"
+        completionRate:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          example: 66.67
+
+    EnrollmentPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrollmentDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Progress ──────────────────────────
+    ProgressDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 55
+        enrollmentId:
+          type: integer
+          format: int64
+          example: 99
+        completionRate:
+          type: number
+          format: double
+          example: 66.67
+        completedLessonIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [1, 2]
+
+    # ── Review ────────────────────────────
+    ReviewRequest:
+      type: object
+      required: [studentId, courseId, comment, rating]
+      properties:
+        studentId:
+          type: integer
+          format: int64
+          example: 7
+        courseId:
+          type: integer
+          format: int64
+          example: 12
+        comment:
+          type: string
+          example: Great course, very well structured.
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+
+    ReplyRequest:
+      type: object
+      required: [instructorId, reply]
+      properties:
+        instructorId:
+          type: integer
+          format: int64
+          example: 3
+        reply:
+          type: string
+          example: Thank you for your feedback!
+
+    ReviewDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5
+        studentId:
+          type: integer
+          format: int64
+          example: 7
+        courseId:
+          type: integer
+          format: int64
+          example: 12
+        comment:
+          type: string
+          example: Great course, very well structured.
+        rating:
+          type: integer
+          example: 5
+        date:
+          type: string
+          format: date
+          example: "2025-10-15"
+        instructorReply:
+          type: string
+          nullable: true
+          example: Thank you for your feedback!
+        repliedAt:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-10-16"
+
+    ReviewPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Book ──────────────────────────────
+    BookRequest:
+      type: object
+      required: [title, author, language, genre, totalCopies]
+      properties:
+        title:
+          type: string
+          example: Clean Code
+        author:
+          type: string
+          example: Robert C. Martin
+        language:
+          type: string
+          example: English
+        genre:
+          type: string
+          example: Software Engineering
+        totalCopies:
+          type: integer
+          minimum: 1
+          example: 5
+
+    BookDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 20
+        title:
+          type: string
+          example: Clean Code
+        author:
+          type: string
+          example: Robert C. Martin
+        language:
+          type: string
+          example: English
+        genre:
+          type: string
+          example: Software Engineering
+        totalCopies:
+          type: integer
+          example: 5
+        availableCopies:
+          type: integer
+          example: 3
+
+    BookPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Borrow ────────────────────────────
+    BorrowRecordDTO:
+      type: object
+      properties:
+        borrowRecordId:
+          type: integer
+          format: int64
+          example: 300
+        studentId:
+          type: integer
+          format: int64
+          example: 7
+        bookId:
+          type: integer
+          format: int64
+          example: 20
+        bookTitle:
+          type: string
+          example: Clean Code
+        borrowDate:
+          type: string
+          format: date
+          example: "2026-01-10"
+        dueDate:
+          type: string
+          format: date
+          example: "2026-01-24"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        overdue:
+          type: boolean
+          example: false
+
+    BorrowPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/BorrowRecordDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Room ──────────────────────────────
+    RoomRequest:
+      type: object
+      required: [roomNumber, floor, capacity, type]
+      properties:
+        roomNumber:
+          type: integer
+          example: 204
+        floor:
+          type: integer
+          example: 2
+        capacity:
+          type: integer
+          minimum: 1
+          example: 30
+        type:
+          $ref: '#/components/schemas/RoomType'
+
+    RoomDTO:
+      type: object
+      properties:
+        roomId:
+          type: integer
+          format: int64
+          example: 8
+        roomNumber:
+          type: integer
+          example: 204
+        floor:
+          type: integer
+          example: 2
+        capacity:
+          type: integer
+          example: 30
+        type:
+          $ref: '#/components/schemas/RoomType'
+
+    RoomPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Room Booking ──────────────────────
+    RoomBookingRequest:
+      type: object
+      required: [roomId, date, startTime, endTime]
+      properties:
+        studentId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 7
+        instructorId:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        roomId:
+          type: integer
+          format: int64
+          example: 8
+        date:
+          type: string
+          format: date
+          example: "2026-03-10"
+        startTime:
+          type: string
+          format: time
+          example: "10:00:00"
+        endTime:
+          type: string
+          format: time
+          example: "12:00:00"
+
+    RoomBookingDTO:
+      type: object
+      properties:
+        bookingId:
+          type: integer
+          format: int64
+          example: 41
+        studentId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 7
+        instructorId:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        roomId:
+          type: integer
+          format: int64
+          example: 8
+        date:
+          type: string
+          format: date
+          example: "2026-03-10"
+        startTime:
+          type: string
+          format: time
+          example: "10:00:00"
+        endTime:
+          type: string
+          format: time
+          example: "12:00:00"
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        canceledAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    BookingPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomBookingDTO'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+
+    # ── Reports ───────────────────────────
+    MostBorrowedReportDTO:
+      type: object
+      properties:
+        bookTitle:
+          type: string
+          example: Clean Code
+        author:
+          type: string
+          example: Robert C. Martin
+        borrowCount:
+          type: integer
+          example: 47
+
+    # ── Error ─────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-02-17T10:30:00"
+        message:
+          type: string
+          example: Resource not found
+
+  # ───────────────────────────────────────────
+  # Reusable Responses
+  # ───────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Authenticated but insufficient role
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    BadRequest:
+      description: Validation error or business rule violation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+# ─────────────────────────────────────────────
+# Tags (group endpoints in Swagger UI)
+# ─────────────────────────────────────────────
+tags:
+  - name: Auth
+    description: Registration and login
+  - name: Courses
+    description: Course catalog and management
+  - name: Lessons
+    description: Lesson management within courses
+  - name: Enrollments
+    description: Course enrollment and progress tracking
+  - name: Reviews
+    description: Course reviews and instructor replies
+  - name: Books
+    description: Library catalog
+  - name: Borrows
+    description: Borrowing and returning books
+  - name: Rooms
+    description: Room inventory
+  - name: Bookings
+    description: Room booking and cancellation
+  - name: Admin
+    description: Administrator-only user and system management
+
+# ─────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────
+paths:
+
+  # ════════════════════════════════════════════
+  # AUTH
+  # ════════════════════════════════════════════
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      description: Open endpoint. Creates a Student, Instructor, Librarian, or Administrator account.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Registration successful — returns JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: Open endpoint. Returns a JWT token on success.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ════════════════════════════════════════════
+  # COURSES
+  # ════════════════════════════════════════════
+  /courses:
+    get:
+      tags: [Courses]
+      summary: Browse all courses
+      description: |
+        `[PUBLIC]` Returns a paginated list of all courses.
+        Supports filtering by `category`, `level`, `type` and free-text `keyword` search on course name.
+        Sortable by `courseName`, `category`, `level`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: keyword
+          in: query
+          description: Search by course name (case-insensitive, partial match)
+          schema:
+            type: string
+          example: algorithms
+        - name: category
+          in: query
+          schema:
+            type: string
+          example: Computer Science
+        - name: level
+          in: query
+          schema:
+            $ref: '#/components/schemas/CourseLevel'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/CourseType'
+        - name: instructorId
+          in: query
+          description: Filter by instructor
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Paginated course list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoursePageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Courses]
+      summary: Create a course
+      description: '`[INSTRUCTOR]` Creates a new course owned by the given instructor.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '201':
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /courses/{id}:
+    get:
+      tags: [Courses]
+      summary: Get course by ID
+      description: '`[ALL ROLES]` Returns a single course.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Course found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Courses]
+      summary: Update a course
+      description: '`[INSTRUCTOR]` Full update of a course. Instructor must own the course.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseRequest'
+      responses:
+        '200':
+          description: Course updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Courses]
+      summary: Delete a course
+      description: '`[INSTRUCTOR, ADMIN]` Deletes the course and all its lessons.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Course deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # LESSONS
+  # ════════════════════════════════════════════
+  /lessons:
+    post:
+      tags: [Lessons]
+      summary: Add a lesson to a course
+      description: '`[INSTRUCTOR]` Adds a new lesson. Instructor must own the parent course.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonRequest'
+      responses:
+        '201':
+          description: Lesson created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /lessons/course/{courseId}:
+    get:
+      tags: [Lessons]
+      summary: Get all lessons for a course
+      description: |
+        `[ALL ROLES]` Returns lessons for the given course.
+        Sortable by `title`, `durationMinutes`.
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Lesson list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LessonDTO'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /lessons/{id}:
+    get:
+      tags: [Lessons]
+      summary: Get a single lesson
+      description: '`[ALL ROLES]` Access lesson content.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Lesson found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Lessons]
+      summary: Update a lesson
+      description: '`[INSTRUCTOR]` Full update of a lesson. Instructor must own the parent course.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LessonRequest'
+      responses:
+        '200':
+          description: Lesson updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Lessons]
+      summary: Delete a lesson
+      description: '`[INSTRUCTOR]` Removes a lesson from the course.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Lesson deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # ENROLLMENTS
+  # ════════════════════════════════════════════
+  /enrollments/student/{studentId}:
+    get:
+      tags: [Enrollments]
+      summary: Get enrollments for a student
+      description: |
+        `[STUDENT, ADMIN]` Returns all courses a student is enrolled in with progress.
+        Sortable by `enrollmentDate`, `completionRate`.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Enrollment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /enrollments/course/{courseId}:
+    get:
+      tags: [Enrollments]
+      summary: Get enrollments for a course
+      description: |
+        `[INSTRUCTOR, ADMIN]` Returns all students enrolled in a course.
+        Sortable by `enrollmentDate`, `completionRate`.
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Enrollment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /enrollments/course/{courseId}/progress:
+    get:
+      tags: [Enrollments]
+      summary: Track student progress across a course
+      description: |
+        `[INSTRUCTOR, ADMIN]` Returns progress records for every enrolled student.
+        Sortable by `completionRate`.
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Progress records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProgressDTO'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /enrollments/student/{studentId}/course/{courseId}:
+    post:
+      tags: [Enrollments]
+      summary: Enroll student in a course
+      description: '`[STUDENT]` Enrolls the student. Initialises a Progress record at 0%.'
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Enrollment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /enrollments/student/{studentId}/course/{courseId}/lesson/{lessonId}/complete:
+    patch:
+      tags: [Enrollments]
+      summary: Mark a lesson as completed
+      description: '`[STUDENT]` Marks the lesson done and recalculates completion rate.'
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: lessonId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # REVIEWS
+  # ════════════════════════════════════════════
+  /reviews/course/{courseId}:
+    get:
+      tags: [Reviews]
+      summary: Get reviews for a course
+      description: |
+        `[ALL ROLES]` Returns paginated reviews.
+        Filterable by `rating`. Sortable by `rating`, `date`.
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: rating
+          in: query
+          description: Filter by exact star rating (1–5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      responses:
+        '200':
+          description: Review list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Submit a course review
+      description: '`[STUDENT]` Student must be enrolled in the course. One review per student per course.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /reviews/{reviewId}/reply:
+    patch:
+      tags: [Reviews]
+      summary: Instructor replies to a review
+      description: '`[INSTRUCTOR]` Instructor must own the course the review belongs to. One reply per review.'
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplyRequest'
+      responses:
+        '200':
+          description: Reply saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /reviews/{id}:
+    delete:
+      tags: [Reviews]
+      summary: Delete a review
+      description: '`[ADMIN]` Hard-delete a review.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Review deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # BOOKS
+  # ════════════════════════════════════════════
+  /books:
+    get:
+      tags: [Books]
+      summary: Browse the library catalog
+      description: |
+        `[ALL ROLES]` Paginated book catalog.
+        Filterable by `genre`, `language`, `author` (partial), `keyword` (title search).
+        Sortable by `title`, `author`, `genre`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: keyword
+          in: query
+          description: Search by title (case-insensitive, partial match)
+          schema:
+            type: string
+          example: clean
+        - name: author
+          in: query
+          description: Filter by author name (partial match)
+          schema:
+            type: string
+          example: Martin
+        - name: genre
+          in: query
+          schema:
+            type: string
+          example: Software Engineering
+        - name: language
+          in: query
+          schema:
+            type: string
+          example: English
+        - name: availableOnly
+          in: query
+          description: If true, only return books with availableCopies > 0
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Paginated book list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Books]
+      summary: Add a book to the library
+      description: '`[LIBRARIAN, ADMIN]` Adds a new book to the inventory.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequest'
+      responses:
+        '201':
+          description: Book added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /books/{id}:
+    get:
+      tags: [Books]
+      summary: Get book by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Book found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Books]
+      summary: Update a book
+      description: '`[LIBRARIAN, ADMIN]` Updates book details or stock.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookRequest'
+      responses:
+        '200':
+          description: Book updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Books]
+      summary: Remove a book
+      description: '`[LIBRARIAN, ADMIN]` Removes the book from inventory.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Book removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # BORROWS
+  # ════════════════════════════════════════════
+  /borrows/student/{studentId}:
+    get:
+      tags: [Borrows]
+      summary: View borrowing history for a student
+      description: |
+        `[STUDENT, LIBRARIAN, ADMIN]` Returns all borrow records for the student including due dates.
+        Filterable by `overdue`. Sortable by `borrowDate`, `dueDate`.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: overdue
+          in: query
+          description: If true, only return overdue records
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Borrow history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /borrows/student/{studentId}/book/{bookId}:
+    post:
+      tags: [Borrows]
+      summary: Borrow a book
+      description: '`[STUDENT]` Creates a borrow record with a 14-day due date. Decrements availableCopies.'
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Borrow record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowRecordDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /borrows/student/{studentId}/book/{bookId}/return:
+    patch:
+      tags: [Borrows]
+      summary: Return a book
+      description: '`[STUDENT]` Sets endDate to today and increments availableCopies.'
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Book returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowRecordDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /borrows/overdue:
+    get:
+      tags: [Borrows]
+      summary: View all overdue borrow records
+      description: |
+        `[LIBRARIAN, ADMIN]` Returns all records where dueDate is past and book not returned.
+        Sortable by `dueDate`, `studentId`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Overdue records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /borrows/active:
+    get:
+      tags: [Borrows]
+      summary: View all active borrows
+      description: |
+        `[LIBRARIAN, ADMIN]` Returns all borrow records not yet returned.
+        Sortable by `borrowDate`, `dueDate`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Active borrow records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /borrows/{borrowRecordId}/mark-returned:
+    patch:
+      tags: [Borrows]
+      summary: Librarian marks a record as returned
+      description: '`[LIBRARIAN, ADMIN]` Manual override to close a borrow record.'
+      parameters:
+        - name: borrowRecordId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Record marked returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowRecordDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /borrows/reports/most-borrowed:
+    get:
+      tags: [Borrows]
+      summary: Most borrowed books report
+      description: |
+        `[LIBRARIAN, ADMIN]` Returns books ranked by total borrow count descending.
+        Supports `page` and `size` for pagination.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+      responses:
+        '200':
+          description: Report data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MostBorrowedReportDTO'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /borrows/reports/active-borrowers:
+    get:
+      tags: [Borrows]
+      summary: Active borrowers report
+      description: |
+        `[LIBRARIAN, ADMIN]` Returns students who currently have at least one unreturned book.
+        Sortable by `studentId`, `borrowCount`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+      responses:
+        '200':
+          description: Active borrower list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        studentId:
+                          type: integer
+                          format: int64
+                          example: 7
+                        studentName:
+                          type: string
+                          example: Jane Doe
+                        activeBorrowCount:
+                          type: integer
+                          example: 2
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ════════════════════════════════════════════
+  # ROOMS
+  # ════════════════════════════════════════════
+  /rooms:
+    get:
+      tags: [Rooms]
+      summary: Browse available rooms
+      description: |
+        `[ALL ROLES]` Returns paginated rooms.
+        Filterable by `type`, `minCapacity`, `floor`.
+        Sortable by `roomNumber`, `floor`, `capacity`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/RoomType'
+        - name: minCapacity
+          in: query
+          description: Minimum required capacity
+          schema:
+            type: integer
+            minimum: 1
+          example: 20
+        - name: floor
+          in: query
+          schema:
+            type: integer
+          example: 2
+      responses:
+        '200':
+          description: Room list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Rooms]
+      summary: Add a room
+      description: '`[ADMIN]` Creates a new room in the system.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomRequest'
+      responses:
+        '201':
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /rooms/{id}:
+    get:
+      tags: [Rooms]
+      summary: Get room by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Room found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Rooms]
+      summary: Update a room
+      description: '`[ADMIN]` Edits room details.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomRequest'
+      responses:
+        '200':
+          description: Room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Rooms]
+      summary: Delete a room
+      description: '`[ADMIN]` Removes a room from the system.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Room deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # ROOM BOOKINGS
+  # ════════════════════════════════════════════
+  /bookings:
+    get:
+      tags: [Bookings]
+      summary: Get all room bookings
+      description: |
+        `[ADMIN]` Monitor all room bookings system-wide.
+        Filterable by `status`, `date`, `roomId`. Sortable by `date`, `startTime`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          example: "2026-03-10"
+        - name: roomId
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Booking list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Bookings]
+      summary: Book a room
+      description: |
+        `[STUDENT, INSTRUCTOR]` Books a room for a given time slot.
+        Returns `400` if the slot conflicts with an existing ACTIVE booking.
+        Exactly one of `studentId` or `instructorId` must be provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomBookingRequest'
+      responses:
+        '201':
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomBookingDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/student/{studentId}:
+    get:
+      tags: [Bookings]
+      summary: Get bookings for a student
+      description: |
+        `[STUDENT, ADMIN]` Returns student's room bookings.
+        Filterable by `status`. Sortable by `date`, `startTime`.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+      responses:
+        '200':
+          description: Student bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bookings/instructor/{instructorId}:
+    get:
+      tags: [Bookings]
+      summary: Get bookings for an instructor
+      description: |
+        `[INSTRUCTOR, ADMIN]` Returns instructor's room bookings.
+        Filterable by `status`. Sortable by `date`, `startTime`.
+      parameters:
+        - name: instructorId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+      responses:
+        '200':
+          description: Instructor bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bookings/{bookingId}/cancel:
+    patch:
+      tags: [Bookings]
+      summary: Cancel a booking
+      description: '`[STUDENT, INSTRUCTOR, ADMIN]` Cancels an ACTIVE booking. Requester must own the booking (unless ADMIN).'
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: requesterId
+          in: query
+          required: true
+          description: ID of the user requesting the cancellation (will move to JWT principal once security is wired)
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomBookingDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ════════════════════════════════════════════
+  # ADMIN
+  # ════════════════════════════════════════════
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      description: |
+        `[ADMIN]` Returns all system users.
+        Filterable by `role`, `active`. Sortable by `name`, `username`, `role`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: role
+          in: query
+          schema:
+            $ref: '#/components/schemas/Role'
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users/{id}:
+    get:
+      tags: [Admin]
+      summary: Get user by ID
+      description: '`[ADMIN]`'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Admin]
+      summary: Delete a user
+      description: '`[ADMIN]` Hard-deletes the user account.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{id}/activate:
+    patch:
+      tags: [Admin]
+      summary: Activate a user account
+      description: '`[ADMIN]` Sets active = true. Use to approve newly registered accounts.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User activated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{id}/deactivate:
+    patch:
+      tags: [Admin]
+      summary: Deactivate a user account
+      description: '`[ADMIN]` Sets active = false. Deactivated users cannot log in.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deactivated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/enrollments:
+    get:
+      tags: [Admin]
+      summary: View all enrollments
+      description: |
+        `[ADMIN]` System-wide view of all enrollments.
+        Filterable by `courseId`, `studentId`. Sortable by `enrollmentDate`, `completionRate`.
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/DirectionParam'
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Enrollment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.ReviewConverter;
+import com.educationalSystem.mapper.ReviewMapper;
 import com.educationalSystem.dto.ReviewDTO;
 import com.educationalSystem.entity.parts.Course;
 import com.educationalSystem.entity.parts.Review;
@@ -23,11 +23,11 @@ public class ReviewService {
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final ReviewConverter reviewConverter;
+    private final ReviewMapper reviewMapper;
 
     public List<ReviewDTO> getReviewsByCourse(Long courseId) {
         return reviewRepository.findByCourse_CourseId(courseId).stream()
-                .map(r -> reviewConverter.convertToDTO(r, new ReviewDTO()))
+                .map(r -> reviewMapper.convertToDTO(r, new ReviewDTO()))
                 .toList();
     }
 
@@ -48,13 +48,13 @@ public class ReviewService {
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
 
-        Review review = reviewConverter.convertToEntity(dto, new Review());
+        Review review = reviewMapper.convertToEntity(dto, new Review());
         review.setStudent(student);
         review.setCourse(course);
         review.setDate(LocalDate.now());
         reviewRepository.save(review);
 
-        return reviewConverter.convertToDTO(review, new ReviewDTO());
+        return reviewMapper.convertToDTO(review, new ReviewDTO());
     }
 
     @Transactional

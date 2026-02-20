@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.CourseConverter;
+import com.educationalSystem.mapper.CourseMapper;
 import com.educationalSystem.dto.CourseDTO;
 import com.educationalSystem.entity.parts.Course;
 import com.educationalSystem.entity.user.Instructor;
@@ -19,22 +19,22 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final InstructorRepository instructorRepository;
-    private final CourseConverter courseConverter;
+    private final CourseMapper courseMapper;
 
     public List<CourseDTO> getAllCourses() {
         return courseRepository.findAll().stream()
-                .map(c -> courseConverter.convertToDTO(c, new CourseDTO()))
+                .map(c -> courseMapper.convertToDTO(c, new CourseDTO()))
                 .toList();
     }
 
     public CourseDTO getCourseById(Long id) {
         Course course = findCourseOrThrow(id);
-        return courseConverter.convertToDTO(course, new CourseDTO());
+        return courseMapper.convertToDTO(course, new CourseDTO());
     }
 
     public List<CourseDTO> getCoursesByInstructor(Long instructorId) {
         return courseRepository.findByInstructorId(instructorId).stream()
-                .map(c -> courseConverter.convertToDTO(c, new CourseDTO()))
+                .map(c -> courseMapper.convertToDTO(c, new CourseDTO()))
                 .toList();
     }
 
@@ -43,18 +43,18 @@ public class CourseService {
         Instructor instructor = instructorRepository.findById(dto.getInstructorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Instructor not found: " + dto.getInstructorId()));
 
-        Course course = courseConverter.convertToEntity(dto, new Course());
+        Course course = courseMapper.convertToEntity(dto, new Course());
         course.setInstructor(instructor);
         courseRepository.save(course);
-        return courseConverter.convertToDTO(course, new CourseDTO());
+        return courseMapper.convertToDTO(course, new CourseDTO());
     }
 
     @Transactional
     public CourseDTO updateCourse(Long id, CourseDTO dto) {
         Course course = findCourseOrThrow(id);
-        courseConverter.convertToEntity(dto, course);
+        courseMapper.convertToEntity(dto, course);
         courseRepository.save(course);
-        return courseConverter.convertToDTO(course, new CourseDTO());
+        return courseMapper.convertToDTO(course, new CourseDTO());
     }
 
     @Transactional

@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.BorrowRecordDTO;
 import com.educationalSystem.entity.parts.BorrowRecord;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BorrowRecordConverter implements Converter<BorrowRecord, BorrowRecordDTO> {
+public class BorrowRecordMapper implements Converter<BorrowRecord, BorrowRecordDTO> {
 
     @Override
     public BorrowRecordDTO convertToDTO(BorrowRecord entity, BorrowRecordDTO dto) {

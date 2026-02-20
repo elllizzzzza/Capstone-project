@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.LessonConverter;
+import com.educationalSystem.mapper.LessonMapper;
 import com.educationalSystem.dto.LessonDTO;
 import com.educationalSystem.entity.parts.Course;
 import com.educationalSystem.entity.parts.Lesson;
@@ -19,17 +19,17 @@ public class LessonService {
 
     private final LessonRepository lessonRepository;
     private final CourseRepository courseRepository;
-    private final LessonConverter lessonConverter;
+    private final LessonMapper lessonMapper;
 
     public List<LessonDTO> getLessonsByCourse(Long courseId) {
         return lessonRepository.findByCourse_CourseId(courseId).stream()
-                .map(l -> lessonConverter.convertToDTO(l, new LessonDTO()))
+                .map(l -> lessonMapper.convertToDTO(l, new LessonDTO()))
                 .toList();
     }
 
     public LessonDTO getLessonById(Long id) {
         Lesson lesson = findOrThrow(id);
-        return lessonConverter.convertToDTO(lesson, new LessonDTO());
+        return lessonMapper.convertToDTO(lesson, new LessonDTO());
     }
 
     @Transactional
@@ -37,18 +37,18 @@ public class LessonService {
         Course course = courseRepository.findById(dto.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + dto.getCourseId()));
 
-        Lesson lesson = lessonConverter.convertToEntity(dto, new Lesson());
+        Lesson lesson = lessonMapper.convertToEntity(dto, new Lesson());
         lesson.setCourse(course);
         lessonRepository.save(lesson);
-        return lessonConverter.convertToDTO(lesson, new LessonDTO());
+        return lessonMapper.convertToDTO(lesson, new LessonDTO());
     }
 
     @Transactional
     public LessonDTO updateLesson(Long id, LessonDTO dto) {
         Lesson lesson = findOrThrow(id);
-        lessonConverter.convertToEntity(dto, lesson);
+        lessonMapper.convertToEntity(dto, lesson);
         lessonRepository.save(lesson);
-        return lessonConverter.convertToDTO(lesson, new LessonDTO());
+        return lessonMapper.convertToDTO(lesson, new LessonDTO());
     }
 
     @Transactional

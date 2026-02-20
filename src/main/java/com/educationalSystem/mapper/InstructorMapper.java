@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.InstructorDTO;
 import com.educationalSystem.entity.parts.Course;
@@ -8,15 +8,15 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class InstructorConverter implements Converter<Instructor, InstructorDTO> {
+public class InstructorMapper implements Converter<Instructor, InstructorDTO> {
 
-    private final UserConverter userConverter;
+    private final UserMapper userMapper;
 
     @Override
     public InstructorDTO convertToDTO(Instructor entity, InstructorDTO dto) {
         if (entity == null) return null;
 
-        userConverter.convertToDTO(entity, dto);
+        userMapper.convertToDTO(entity, dto);
 
         dto.setAbout(entity.getAbout());
         dto.setProfession(entity.getProfession());
@@ -35,7 +35,7 @@ public class InstructorConverter implements Converter<Instructor, InstructorDTO>
     public Instructor convertToEntity(InstructorDTO dto, Instructor entity) {
         if (dto == null) return null;
 
-        userConverter.convertToEntity(dto, entity);
+        userMapper.convertToEntity(dto, entity);
 
         entity.setAbout(dto.getAbout());
         entity.setProfession(dto.getProfession());

@@ -1,11 +1,11 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.LessonDTO;
 import com.educationalSystem.entity.parts.Lesson;
 import org.springframework.stereotype.Component;
 
 @Component
-public class LessonConverter implements Converter<Lesson, LessonDTO> {
+public class LessonMapper implements Converter<Lesson, LessonDTO> {
 
     @Override
     public LessonDTO convertToDTO(Lesson entity, LessonDTO dto) {

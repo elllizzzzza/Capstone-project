@@ -1,4 +1,4 @@
-package com.educationalSystem.converter;
+package com.educationalSystem.mapper;
 
 import com.educationalSystem.dto.LibrarianDTO;
 import com.educationalSystem.entity.user.Librarian;
@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class LibrarianConverter implements Converter<Librarian, LibrarianDTO> {
+public class LibrarianMapper implements Converter<Librarian, LibrarianDTO> {
 
-    private final UserConverter userConverter;
+    private final UserMapper userMapper;
 
     @Override
     public LibrarianDTO convertToDTO(Librarian entity, LibrarianDTO dto) {
@@ -17,7 +17,7 @@ public class LibrarianConverter implements Converter<Librarian, LibrarianDTO> {
             return null;
         }
 
-        userConverter.convertToDTO(entity, dto);
+        userMapper.convertToDTO(entity, dto);
 
         return dto;
     }
@@ -28,7 +28,7 @@ public class LibrarianConverter implements Converter<Librarian, LibrarianDTO> {
             return null;
         }
 
-        userConverter.convertToEntity(dto, entity);
+        userMapper.convertToEntity(dto, entity);
 
         return entity;
     }
