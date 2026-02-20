@@ -7,7 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-        import java.util.List;
+import javax.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -38,13 +39,13 @@ public class CourseController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<CourseDTO> createCourse(@RequestBody CourseDTO dto) {
+    public ResponseEntity<CourseDTO> createCourse(@Valid @RequestBody CourseDTO dto) {
         CourseDTO created = courseService.createCourse(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CourseDTO> updateCourse(@PathVariable Long id, @RequestBody CourseDTO dto) {
+    public ResponseEntity<CourseDTO> updateCourse(@PathVariable Long id, @Valid @RequestBody CourseDTO dto) {
         return ResponseEntity.ok(courseService.updateCourse(id, dto));
     }
 

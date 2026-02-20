@@ -12,7 +12,7 @@ public class RoomConverter implements Converter<Room, RoomDTO> {
         if (entity == null) return null;
 
         dto.setRoomId(entity.getRoomId());
-        dto.setRoomNUmber(entity.getRoomNumber());
+        dto.setRoomNumber(entity.getRoomNumber());
         dto.setFloor(entity.getFloor());
         dto.setCapacity(entity.getCapacity());
         dto.setType(entity.getType());
@@ -24,7 +24,7 @@ public class RoomConverter implements Converter<Room, RoomDTO> {
     public Room convertToEntity(RoomDTO dto, Room entity) {
         if (dto == null) return null;
 
-        entity.setRoomNumber(dto.getRoomNUmber());
+        entity.setRoomNumber(dto.getRoomNumber());
         entity.setFloor(dto.getFloor());
         entity.setCapacity(dto.getCapacity());
         entity.setType(dto.getType());

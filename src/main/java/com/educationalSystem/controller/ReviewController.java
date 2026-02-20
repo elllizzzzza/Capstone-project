@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -22,7 +23,7 @@ public class ReviewController {
     }
 
     @PostMapping
-    public ResponseEntity<ReviewDTO> submitReview(@RequestBody ReviewDTO dto) {
+    public ResponseEntity<ReviewDTO> submitReview(@Valid @RequestBody ReviewDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.submitReview(dto));
     }
 

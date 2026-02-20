@@ -20,11 +20,11 @@ public class CourseConverter implements Converter<Course, CourseDTO> {
         dto.setLevel(entity.getLevel());
         dto.setInstructorId(entity.getInstructor() != null ? entity.getInstructor().getId() : null);
 
-        dto.setLessonsIds(entity.getLessons() != null
+        dto.setLessonIds(entity.getLessons() != null
                 ? entity.getLessons().stream().map(Lesson::getLessonId).toList()
                 : null);
 
-        dto.setReviewsIds(entity.getReviews() != null
+        dto.setReviewIds(entity.getReviews() != null
                 ? entity.getReviews().stream().map(Review::getId).toList()
                 : null);
 
