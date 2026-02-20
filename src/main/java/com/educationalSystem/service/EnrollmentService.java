@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.EnrollmentConverter;
+import com.educationalSystem.mapper.EnrollmentMapper;
 import com.educationalSystem.dto.EnrollmentDTO;
 import com.educationalSystem.entity.parts.*;
 import com.educationalSystem.entity.user.Student;
@@ -22,17 +22,18 @@ public class EnrollmentService {
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
     private final ProgressRepository progressRepository;
-    private final EnrollmentConverter enrollmentConverter;
+    private final EnrollmentMapper enrollmentMapper;
+    private final LessonRepository lessonRepository;
 
     public List<EnrollmentDTO> getEnrollmentsByStudent(Long studentId) {
         return enrollmentRepository.findByStudent_Id(studentId).stream()
-                .map(e -> enrollmentConverter.convertToDTO(e, new EnrollmentDTO()))
+                .map(e -> enrollmentMapper.convertToDTO(e, new EnrollmentDTO()))
                 .toList();
     }
 
     public List<EnrollmentDTO> getEnrollmentsByCourse(Long courseId) {
         return enrollmentRepository.findByCourse_CourseId(courseId).stream()
-                .map(e -> enrollmentConverter.convertToDTO(e, new EnrollmentDTO()))
+                .map(e -> enrollmentMapper.convertToDTO(e, new EnrollmentDTO()))
                 .toList();
     }
 
@@ -58,7 +59,7 @@ public class EnrollmentService {
         progress.setCompletionRate(0.0);
         progressRepository.save(progress);
 
-        return enrollmentConverter.convertToDTO(enrollment, new EnrollmentDTO());
+        return enrollmentMapper.convertToDTO(enrollment, new EnrollmentDTO());
     }
 
     @Transactional
@@ -79,12 +80,12 @@ public class EnrollmentService {
 
             progress.getCompletedLessons().add(lesson);
 
-            int total = enrollment.getCourse().getLessons().size();
+            int total = lessonRepository.countByCourse_CourseId(courseId);
             int completed = progress.getCompletedLessons().size();
             progress.setCompletionRate(total > 0 ? (double) completed / total * 100 : 0);
             progressRepository.save(progress);
         }
 
-        return enrollmentConverter.convertToDTO(enrollment, new EnrollmentDTO());
+        return enrollmentMapper.convertToDTO(enrollment, new EnrollmentDTO());
     }
 }

@@ -1,6 +1,6 @@
 package com.educationalSystem.service;
 
-import com.educationalSystem.converter.UserConverter;
+import com.educationalSystem.mapper.UserMapper;
 import com.educationalSystem.dto.UserDTO;
 import com.educationalSystem.entity.user.User;
 import com.educationalSystem.exception.ResourceNotFoundException;
@@ -16,24 +16,24 @@ import java.util.List;
 public class UserManagementService {
 
     private final UserRepository userRepository;
-    private final UserConverter userConverter;          // ← injected, not inlined
+    private final UserMapper userMapper;          // ← injected, not inlined
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(u -> userConverter.convertToDTO(u, new UserDTO()))
+                .map(u -> userMapper.convertToDTO(u, new UserDTO()))
                 .toList();
     }
 
     public UserDTO getUserById(Long id) {
-        return userConverter.convertToDTO(findOrThrow(id), new UserDTO());
+        return userMapper.convertToDTO(findOrThrow(id), new UserDTO());
     }
 
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found: " + id);
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+
+        userRepository.delete(user);
     }
 
     private User findOrThrow(Long id) {
