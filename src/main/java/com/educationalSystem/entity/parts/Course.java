@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,17 +30,12 @@ public class Course {
     @Enumerated(EnumType.STRING)
     private CourseLevel level;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Instructor instructor;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     private List<Lesson> lessons = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course")
-    private List<Review> reviews;
-//
-//    private double satisfactionFactor;
-//    private int reviewNumber;
-//    private LocalTime duration;
-//    private int numOfLectures;
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    private List<Review> reviews = new ArrayList<>();
 }

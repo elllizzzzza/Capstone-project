@@ -18,14 +18,18 @@ public class BorrowRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long borrowRecordId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Student student;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Book book;
 
     private LocalDate borrowDate;
     private LocalDate dueDate;
     private LocalDate endDate;
-    private boolean isOverdue;
+
+    @Transient
+    public boolean isOverdue() {
+        return endDate == null && LocalDate.now().isAfter(dueDate);
+    }
 }

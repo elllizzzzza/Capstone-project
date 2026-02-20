@@ -24,17 +24,17 @@ public class Enrollment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id")
     private Student student;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id")
     private Course course;
 
     @Column(nullable = false)
     private LocalDate enrollmentDate;
 
-    @Embedded
+    @OneToOne(mappedBy = "enrollment", cascade = CascadeType.ALL)
     private Progress progress;
 }

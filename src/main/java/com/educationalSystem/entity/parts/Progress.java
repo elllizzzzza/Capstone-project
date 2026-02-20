@@ -5,20 +5,29 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Embeddable
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Progress {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
     private double completionRate;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "completed_lessons",
-            joinColumns = @JoinColumn(name = "enrollment_id")
+    @OneToOne
+    @JoinColumn(name = "enrollment_id")
+    private Enrollment enrollment;
+
+    @ManyToMany
+    @JoinTable(
+            name= "completed_lessons",
+            joinColumns = @JoinColumn(name = "progress_id"),
+            inverseJoinColumns = @JoinColumn(name = "lesson_id")
     )
-    @Column(name = "lesson_id")
-    private List<Lesson> completedLessons;
+    private List<Lesson> completedLessons = new ArrayList<>();
 }

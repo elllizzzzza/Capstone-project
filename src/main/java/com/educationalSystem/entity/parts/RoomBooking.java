@@ -1,13 +1,15 @@
 package com.educationalSystem.entity.parts;
 
+import com.educationalSystem.entity.user.Instructor;
 import com.educationalSystem.entity.user.Student;
+import com.educationalSystem.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Generated;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -20,15 +22,20 @@ public class RoomBooking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookingId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Student student;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Instructor instructor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private Room room;
 
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
+    private LocalDateTime canceledAt;
 
-    private Boolean active;
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status = BookingStatus.ACTIVE;
 }

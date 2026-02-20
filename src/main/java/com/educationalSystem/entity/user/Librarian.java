@@ -4,11 +4,10 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @DiscriminatorValue("LIBRARIAN")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class Librarian extends User{
-
 }
