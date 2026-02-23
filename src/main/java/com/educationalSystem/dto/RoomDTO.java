@@ -8,6 +8,7 @@ import javax.validation.constraints.*;
 @Data
 public class RoomDTO {
 
+    @NotNull
     private Long roomId;
 
     @NotNull(message = "Room number is required")

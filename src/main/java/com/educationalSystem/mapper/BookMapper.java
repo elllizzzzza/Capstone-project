@@ -16,6 +16,8 @@ public class BookMapper implements Converter<Book, BookDTO> {
         dto.setAuthor(entity.getAuthor());
         dto.setLanguage(entity.getLanguage());
         dto.setGenre(entity.getGenre());
+        dto.setTotalCopies(entity.getTotalCopies());
+        dto.setAvailableCopies(entity.getAvailableCopies());
 
         return dto;
     }
@@ -28,6 +30,8 @@ public class BookMapper implements Converter<Book, BookDTO> {
         entity.setAuthor(dto.getAuthor());
         entity.setLanguage(dto.getLanguage());
         entity.setGenre(dto.getGenre());
+        entity.setTotalCopies(dto.getTotalCopies());
+        entity.setAvailableCopies(dto.getAvailableCopies());
 
         return entity;
     }

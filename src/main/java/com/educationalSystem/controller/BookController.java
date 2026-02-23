@@ -38,7 +38,6 @@ public class BookController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<BookDTO> addBook(@Valid @RequestBody BookDTO dto) {
         BookDTO created = bookService.addBook(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -50,7 +49,6 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
