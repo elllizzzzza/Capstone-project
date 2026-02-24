@@ -1,8 +1,10 @@
 package com.educationalSystem.service;
 
 import com.educationalSystem.dto.BookDTO;
+import com.educationalSystem.dto.response.PagedResponse;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.exception.ResourceNotFoundException;
+import com.educationalSystem.filter.BookFilter;
 import com.educationalSystem.mapper.BookMapper;
 import com.educationalSystem.repository.BookRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +43,7 @@ class BookServiceTest {
 
     private Book book;
     private BookDTO bookDTO;
+    private Pageable pageable;
 
     @BeforeEach
     void setUp() {
@@ -56,6 +64,51 @@ class BookServiceTest {
         bookDTO.setGenre("Programming");
         bookDTO.setTotalCopies(5);
         bookDTO.setAvailableCopies(5);
+
+        pageable = PageRequest.of(0, 10);
+    }
+
+    @Nested
+    @DisplayName("getAllBooks()")
+    class GetAllBooksTests {
+
+        @Test
+        @DisplayName("Should return paged response with books")
+        void getAllBooks_ReturnsPaged() {
+            Page<Book> page = new PageImpl<>(List.of(book));
+            when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+            when(bookMapper.convertToDTO(any(), any())).thenReturn(bookDTO);
+
+            PagedResponse<BookDTO> result = bookService.getAllBooks(new BookFilter(), pageable);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getTotalItems()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getTitle()).isEqualTo("Clean Code");
+        }
+
+        @Test
+        @DisplayName("Should return empty paged response when no books")
+        void getAllBooks_ReturnsEmpty() {
+            Page<Book> emptyPage = new PageImpl<>(List.of());
+            when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage);
+
+            PagedResponse<BookDTO> result = bookService.getAllBooks(new BookFilter(), pageable);
+
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalItems()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should pass filter and pageable to repository")
+        void getAllBooks_PassesSpecAndPageable() {
+            Page<Book> page = new PageImpl<>(List.of());
+            when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+            bookService.getAllBooks(new BookFilter(), pageable);
+
+            verify(bookRepository).findAll(any(Specification.class), eq(pageable));
+        }
     }
 
     @Nested
@@ -66,7 +119,7 @@ class BookServiceTest {
         @DisplayName("Should return book DTO when found")
         void getBookById_Found() {
             when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
-            when(bookMapper.convertToDTO(book, new BookDTO())).thenReturn(bookDTO);
+            when(bookMapper.convertToDTO(eq(book), any())).thenReturn(bookDTO);
 
             BookDTO result = bookService.getBookById(1L);
 
@@ -90,7 +143,7 @@ class BookServiceTest {
     class AddBookTests {
 
         @Test
-        @DisplayName("Should add book successfully")
+        @DisplayName("Should save and return book DTO")
         void addBook_Success() {
             when(bookMapper.convertToEntity(any(), any())).thenReturn(book);
             when(bookMapper.convertToDTO(any(), any())).thenReturn(bookDTO);
@@ -107,7 +160,7 @@ class BookServiceTest {
     class UpdateBookTests {
 
         @Test
-        @DisplayName("Should update book when found")
+        @DisplayName("Should update and return book DTO")
         void updateBook_Success() {
             when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
             when(bookMapper.convertToEntity(any(), any())).thenReturn(book);
@@ -120,12 +173,13 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when updating non-existent book")
+        @DisplayName("Should throw ResourceNotFoundException when book not found")
         void updateBook_NotFound() {
             when(bookRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> bookService.updateBook(99L, bookDTO))
-                    .isInstanceOf(ResourceNotFoundException.class);
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("Book not found: 99");
         }
     }
 
@@ -144,41 +198,13 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when deleting non-existent book")
+        @DisplayName("Should throw ResourceNotFoundException when book not found")
         void deleteBook_NotFound() {
             when(bookRepository.existsById(99L)).thenReturn(false);
 
             assertThatThrownBy(() -> bookService.deleteBook(99L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Book not found: 99");
-        }
-    }
-
-    @Nested
-    @DisplayName("searchBooks()")
-    class SearchBooksTests {
-
-        @Test
-        @DisplayName("Should return matching books")
-        void searchBooks_ReturnsResults() {
-            when(bookRepository.findByTitleContainingIgnoreCase("clean"))
-                    .thenReturn(List.of(book));
-            when(bookMapper.convertToDTO(any(), any())).thenReturn(bookDTO);
-
-            List<BookDTO> results = bookService.searchBooks("clean");
-
-            assertThat(results).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Should return empty list when no match")
-        void searchBooks_NoMatch() {
-            when(bookRepository.findByTitleContainingIgnoreCase("zzz"))
-                    .thenReturn(List.of());
-
-            List<BookDTO> results = bookService.searchBooks("zzz");
-
-            assertThat(results).isEmpty();
         }
     }
 }

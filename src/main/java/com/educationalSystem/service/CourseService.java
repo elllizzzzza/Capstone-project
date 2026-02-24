@@ -1,5 +1,8 @@
 package com.educationalSystem.service;
 
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.CourseFilter;
+import com.educationalSystem.filter.CourseSpecification;
 import com.educationalSystem.mapper.CourseMapper;
 import com.educationalSystem.dto.CourseDTO;
 import com.educationalSystem.entity.parts.Course;
@@ -8,6 +11,7 @@ import com.educationalSystem.exception.ResourceNotFoundException;
 import com.educationalSystem.repository.CourseRepository;
 import com.educationalSystem.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +25,15 @@ public class CourseService {
     private final InstructorRepository instructorRepository;
     private final CourseMapper courseMapper;
 
-    public List<CourseDTO> getAllCourses() {
-        return courseRepository.findAll().stream()
-                .map(c -> courseMapper.convertToDTO(c, new CourseDTO()))
-                .toList();
+    public PagedResponse<CourseDTO> getAllCourses(CourseFilter filter, Pageable pageable) {
+        return PagedResponse.from(
+                courseRepository.findAll(CourseSpecification.fromFilter(filter), pageable)
+                        .map(c -> courseMapper.convertToDTO(c, new CourseDTO()))
+        );
     }
 
     public CourseDTO getCourseById(Long id) {
-        Course course = findCourseOrThrow(id);
-        return courseMapper.convertToDTO(course, new CourseDTO());
+        return courseMapper.convertToDTO(findCourseOrThrow(id), new CourseDTO());
     }
 
     public List<CourseDTO> getCoursesByInstructor(Long instructorId) {

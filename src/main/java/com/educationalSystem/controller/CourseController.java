@@ -1,8 +1,13 @@
 package com.educationalSystem.controller;
 
 import com.educationalSystem.dto.CourseDTO;
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.CourseFilter;
 import com.educationalSystem.service.CourseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +23,8 @@ public class CourseController {
     private final CourseService courseService;
 
     @GetMapping
-    public ResponseEntity<List<CourseDTO>> getAllCourses() {
-        return ResponseEntity.ok(courseService.getAllCourses());
+    public ResponseEntity<PagedResponse<CourseDTO>> getAllCourses(@ModelAttribute CourseFilter filter, @PageableDefault(size = 10, sort = "courseName", direction = Sort.Direction.ASC)Pageable pageable) {
+        return ResponseEntity.ok(courseService.getAllCourses(filter, pageable));
     }
 
     @GetMapping("/{id}")
@@ -38,10 +43,8 @@ public class CourseController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<CourseDTO> createCourse(@Valid @RequestBody CourseDTO dto) {
-        CourseDTO created = courseService.createCourse(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.createCourse(dto));
     }
 
     @PutMapping("/{id}")
@@ -50,7 +53,6 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
         return ResponseEntity.noContent().build();

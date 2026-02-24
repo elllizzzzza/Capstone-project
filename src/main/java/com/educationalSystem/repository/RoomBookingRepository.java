@@ -1,15 +1,15 @@
 package com.educationalSystem.repository;
 
 import com.educationalSystem.entity.parts.RoomBooking;
-import com.educationalSystem.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public interface RoomBookingRepository extends JpaRepository<RoomBooking, Long> {
+public interface RoomBookingRepository extends JpaRepository<RoomBooking, Long>, JpaSpecificationExecutor<RoomBooking> {
     List<RoomBooking> findByStudent_Id(Long studentId);
     List<RoomBooking> findByInstructor_Id(Long instructorId);
 
