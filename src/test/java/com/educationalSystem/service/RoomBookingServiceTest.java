@@ -1,5 +1,6 @@
 package com.educationalSystem.service;
 
+import com.educationalSystem.dto.response.PagedResponse;
 import com.educationalSystem.dto.RoomBookingDTO;
 import com.educationalSystem.entity.parts.Room;
 import com.educationalSystem.entity.parts.RoomBooking;
@@ -9,6 +10,7 @@ import com.educationalSystem.enums.BookingStatus;
 import com.educationalSystem.enums.RoomType;
 import com.educationalSystem.exception.BusinessException;
 import com.educationalSystem.exception.ResourceNotFoundException;
+import com.educationalSystem.filter.RoomBookingFilter;
 import com.educationalSystem.mapper.RoomBookingMapper;
 import com.educationalSystem.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +21,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -56,6 +63,7 @@ class RoomBookingServiceTest {
     private Instructor instructor;
     private RoomBooking roomBooking;
     private RoomBookingDTO roomBookingDTO;
+    private Pageable pageable;
 
     @BeforeEach
     void setUp() {
@@ -89,8 +97,53 @@ class RoomBookingServiceTest {
         roomBookingDTO.setDate(LocalDate.now().plusDays(1));
         roomBookingDTO.setStartTime(LocalTime.of(10, 0));
         roomBookingDTO.setEndTime(LocalTime.of(12, 0));
+
+        pageable = PageRequest.of(0, 10);
     }
 
+    @Nested
+    @DisplayName("getAllBookings()")
+    class GetAllBookingsTests {
+
+        @Test
+        @DisplayName("Should return paged response with bookings")
+        void getAllBookings_ReturnsPaged() {
+            Page<RoomBooking> page = new PageImpl<>(List.of(roomBooking));
+            when(bookingRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+            when(bookingConverter.convertToDTO(any(), any())).thenReturn(roomBookingDTO);
+
+            PagedResponse<RoomBookingDTO> result =
+                    roomBookingService.getAllBookings(new RoomBookingFilter(), pageable);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getTotalItems()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Should return empty paged response when no bookings")
+        void getAllBookings_ReturnsEmpty() {
+            Page<RoomBooking> emptyPage = new PageImpl<>(List.of());
+            when(bookingRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage);
+
+            PagedResponse<RoomBookingDTO> result =
+                    roomBookingService.getAllBookings(new RoomBookingFilter(), pageable);
+
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalItems()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should delegate to repository with spec and pageable")
+        void getAllBookings_PassesSpecAndPageable() {
+            Page<RoomBooking> page = new PageImpl<>(List.of());
+            when(bookingRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+            roomBookingService.getAllBookings(new RoomBookingFilter(), pageable);
+
+            verify(bookingRepository).findAll(any(Specification.class), eq(pageable));
+        }
+    }
 
     @Nested
     @DisplayName("bookRoom()")
@@ -137,7 +190,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw BusinessException when start time equals end time")
+        @DisplayName("Should throw when start time equals end time")
         void bookRoom_StartTimeEqualsEndTime() {
             roomBookingDTO.setStartTime(LocalTime.of(10, 0));
             roomBookingDTO.setEndTime(LocalTime.of(10, 0));
@@ -148,7 +201,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw BusinessException when start time is after end time")
+        @DisplayName("Should throw when start time is after end time")
         void bookRoom_StartAfterEndTime() {
             roomBookingDTO.setStartTime(LocalTime.of(14, 0));
             roomBookingDTO.setEndTime(LocalTime.of(10, 0));
@@ -159,10 +212,10 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when room not found")
+        @DisplayName("Should throw when room not found")
         void bookRoom_RoomNotFound() {
-            when(roomRepository.findById(99L)).thenReturn(Optional.empty());
             roomBookingDTO.setRoomId(99L);
+            when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> roomBookingService.bookRoom(roomBookingDTO))
                     .isInstanceOf(ResourceNotFoundException.class)
@@ -170,7 +223,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw BusinessException when room has conflicting booking")
+        @DisplayName("Should throw when conflicting booking exists")
         void bookRoom_ConflictingBooking() {
             when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
             when(bookingRepository.findConflicting(anyLong(), any(), any(), any()))
@@ -182,7 +235,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw BusinessException when neither studentId nor instructorId provided")
+        @DisplayName("Should throw when neither studentId nor instructorId provided")
         void bookRoom_NoBookerProvided() {
             roomBookingDTO.setStudentId(null);
             roomBookingDTO.setInstructorId(null);
@@ -217,7 +270,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when booking not found")
+        @DisplayName("Should throw when booking not found")
         void cancelBooking_NotFound() {
             when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -227,7 +280,7 @@ class RoomBookingServiceTest {
         }
 
         @Test
-        @DisplayName("Should throw BusinessException when booking already cancelled")
+        @DisplayName("Should throw when booking already cancelled")
         void cancelBooking_AlreadyCancelled() {
             roomBooking.setStatus(BookingStatus.CANCELLED);
             when(bookingRepository.findById(1L)).thenReturn(Optional.of(roomBooking));
@@ -239,7 +292,7 @@ class RoomBookingServiceTest {
     }
 
     @Nested
-    @DisplayName("getBookings()")
+    @DisplayName("getBookingsByStudent() / getBookingsByInstructor()")
     class GetBookingsTests {
 
         @Test
@@ -262,17 +315,6 @@ class RoomBookingServiceTest {
             when(bookingConverter.convertToDTO(any(), any())).thenReturn(roomBookingDTO);
 
             List<RoomBookingDTO> result = roomBookingService.getBookingsByInstructor(1L);
-
-            assertThat(result).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("Should return all bookings")
-        void getAllBookings_ReturnsList() {
-            when(bookingRepository.findAll()).thenReturn(List.of(roomBooking));
-            when(bookingConverter.convertToDTO(any(), any())).thenReturn(roomBookingDTO);
-
-            List<RoomBookingDTO> result = roomBookingService.getAllBookings();
 
             assertThat(result).hasSize(1);
         }

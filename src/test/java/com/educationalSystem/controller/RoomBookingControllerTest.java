@@ -1,9 +1,11 @@
 package com.educationalSystem.controller;
 
 import com.educationalSystem.dto.RoomBookingDTO;
+import com.educationalSystem.dto.response.PagedResponse;
 import com.educationalSystem.enums.BookingStatus;
 import com.educationalSystem.exception.BusinessException;
 import com.educationalSystem.exception.ResourceNotFoundException;
+import com.educationalSystem.filter.RoomBookingFilter;
 import com.educationalSystem.service.RoomBookingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +14,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,9 +34,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("RoomBookingController Integration Tests")
 class RoomBookingControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @MockitoBean private RoomBookingService bookingService;
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private RoomBookingService bookingService;
 
     private RoomBookingDTO validBookingDTO;
 
@@ -54,12 +64,14 @@ class RoomBookingControllerTest {
         @Test
         @DisplayName("200 - Returns all bookings")
         void getAllBookings_200() throws Exception {
-            when(bookingService.getAllBookings()).thenReturn(List.of(validBookingDTO));
+            Page<RoomBookingDTO> page = new PageImpl<>(List.of(validBookingDTO));
 
+            when(bookingService.getAllBookings(any(RoomBookingFilter.class), any(Pageable.class)))
+                    .thenReturn(PagedResponse.from(page));
             mockMvc.perform(get("/api/bookings"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].roomId").value(1))
-                    .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+                    .andExpect(jsonPath("$.content[0].roomId").value(1L))
+                    .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
         }
     }
 
