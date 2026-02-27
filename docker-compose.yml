@@ -1,25 +1,3 @@
-#services:
-#  postgres:
-#    image: postgres:16
-#    container_name: local-postgres
-#    restart: always
-#
-#    environment:
-#      POSTGRES_USER: ${POSTGRES_USER}
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#      POSTGRES_DB: ${POSTGRES_DB}
-#
-#    ports:
-#      - "${POSTGRES_PORT}:5432"
-#
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-#      - "./initdb:/docker-entrypoint-initdb.d:ro"
-#
-#volumes:
-#  postgres_data:
-version: '3.8'
-
 services:
 
   # =================== DATABASES ===================
@@ -103,7 +81,9 @@ services:
   # =================== SERVICES ===================
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: user-service
     ports:
       - "8081:8081"
@@ -119,7 +99,9 @@ services:
     restart: on-failure
 
   course-service:
-    build: ./course-service
+    build:
+      context: .
+      dockerfile: course-service/Dockerfile
     container_name: course-service
     ports:
       - "8082:8082"
@@ -138,7 +120,9 @@ services:
     restart: on-failure
 
   library-service:
-    build: ./library-service
+    build:
+      context: .
+      dockerfile: library-service/Dockerfile
     container_name: library-service
     ports:
       - "8083:8083"
@@ -157,7 +141,9 @@ services:
     restart: on-failure
 
   room-service:
-    build: ./room-service
+    build:
+      context: .
+      dockerfile: room-service/Dockerfile
     container_name: room-service
     ports:
       - "8084:8084"
