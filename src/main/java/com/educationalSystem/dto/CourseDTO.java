@@ -4,7 +4,7 @@ import com.educationalSystem.enums.CourseLevel;
 import com.educationalSystem.enums.CourseType;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 import java.util.ArrayList;
 import java.util.List;
 

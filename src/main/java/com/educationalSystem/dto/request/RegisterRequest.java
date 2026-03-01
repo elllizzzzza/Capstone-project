@@ -3,7 +3,7 @@ package com.educationalSystem.dto.request;
 import com.educationalSystem.enums.Role;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 @Data
 public class RegisterRequest {

@@ -3,7 +3,7 @@ package com.educationalSystem.dto;
 import com.educationalSystem.enums.BookingStatus;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;

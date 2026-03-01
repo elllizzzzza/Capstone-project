@@ -3,7 +3,7 @@ package com.educationalSystem.dto;
 import com.educationalSystem.enums.RoomType;
 import lombok.Data;
 
-import javax.validation.constraints.*;
+import jakarta.validation.constraints.*;
 
 @Data
 public class RoomDTO {
