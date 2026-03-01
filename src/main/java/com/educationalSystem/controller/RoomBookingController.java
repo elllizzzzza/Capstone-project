@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -32,7 +33,7 @@ public class RoomBookingController {
     }
 
     @PostMapping
-    public ResponseEntity<RoomBookingDTO> bookRoom(@RequestBody RoomBookingDTO dto) {
+    public ResponseEntity<RoomBookingDTO> bookRoom(@Valid @RequestBody RoomBookingDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.bookRoom(dto));
     }
 

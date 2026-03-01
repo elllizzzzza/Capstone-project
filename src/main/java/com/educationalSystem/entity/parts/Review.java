@@ -27,4 +27,6 @@ public class Review {
     private String comment;
     private int rating;
     private LocalDate date;
+    private String instructorReply;
+    private LocalDate repliedAt;
 }

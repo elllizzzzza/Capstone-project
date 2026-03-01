@@ -31,13 +31,13 @@ public class BookService {
 
     public List<BookDTO> searchBooks(String keyword) {
         return bookRepository.findByTitleContainingIgnoreCase(keyword).stream()
-                .map(b -> bookConverter.convertToDTO((Book) b, new BookDTO()))
+                .map(b -> bookMapper.convertToDTO((Book) b, new BookDTO()))
                 .toList();
     }
 
     public List<BookDTO> filterByGenre(String genre) {
         return bookRepository.findByGenre(genre).stream()
-                .map(b -> bookConverter.convertToDTO(b, new BookDTO()))
+                .map(b -> bookMapper.convertToDTO(b, new BookDTO()))
                 .toList();
     }
 

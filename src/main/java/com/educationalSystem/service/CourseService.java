@@ -40,7 +40,7 @@ public class CourseService {
 
     public List<CourseDTO> searchCourses(String keyword) {
         return courseRepository.findByCourseNameContainingIgnoreCase(keyword).stream()
-                .map(c -> courseConverter.convertToDTO(c, new CourseDTO()))
+                .map(c -> courseMapper.convertToDTO(c, new CourseDTO()))
                 .toList();
     }
 
