@@ -1,6 +1,6 @@
 package com.educationalSystem.exception;
 
-import com.educationalSystem.dto.error.ProblemDetail;
+import com.educationalSystem.dto.error.ErrorDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +18,11 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ProblemDetail> handleValidationErrors(
+    public ResponseEntity<ErrorDTO> handleValidationErrors(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
-        List<ProblemDetail.FieldError> fieldErrors = ex.getBindingResult()
+        List<ErrorDTO.FieldError> fieldErrors = ex.getBindingResult()
                 .getAllErrors()
                 .stream()
                 .map(error -> {
@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                     Object rejectedValue = ((FieldError) error).getRejectedValue();
                     String message = error.getDefaultMessage();
 
-                    return ProblemDetail.FieldError.builder()
+                    return ErrorDTO.FieldError.builder()
                             .field(fieldName)
                             .rejectedValue(rejectedValue)
                             .message(message)
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
                 })
                 .collect(Collectors.toList());
 
-        ProblemDetail problemDetail = ProblemDetail.builder()
+        ErrorDTO problemDetail = ErrorDTO.builder()
                 .type("validation-error")
                 .title("Validation Failed")
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -52,11 +52,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ProblemDetail> handleNotFound(
+    public ResponseEntity<ErrorDTO> handleNotFound(
             ResourceNotFoundException ex,
             HttpServletRequest request) {
 
-        ProblemDetail problemDetail = ProblemDetail.builder()
+        ErrorDTO problemDetail = ErrorDTO.builder()
                 .type("resource-not-found")
                 .title("Resource Not Found")
                 .status(HttpStatus.NOT_FOUND.value())
@@ -70,11 +70,11 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ProblemDetail> handleBusinessException(
+    public ResponseEntity<ErrorDTO> handleBusinessException(
             BusinessException ex,
             HttpServletRequest request) {
 
-        ProblemDetail problemDetail = ProblemDetail.builder()
+        ErrorDTO problemDetail = ErrorDTO.builder()
                 .type("business-rule-violation")
                 .title("Business Rule Violation")
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -87,11 +87,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ProblemDetail> handleGenericException(
+    public ResponseEntity<ErrorDTO> handleGenericException(
             Exception ex,
             HttpServletRequest request) {
 
-        ProblemDetail problemDetail = ProblemDetail.builder()
+        ErrorDTO problemDetail = ErrorDTO.builder()
                 .type("internal-server-error")
                 .title("Internal Server Error")
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

@@ -22,7 +22,7 @@ public class LessonService {
     private final LessonMapper lessonMapper;
 
     public List<LessonDTO> getLessonsByCourse(Long courseId) {
-        return lessonRepository.findByCourse_CourseId(courseId).stream()
+        return lessonRepository.findByCourseCourseId(courseId).stream()
                 .map(l -> lessonMapper.mapToDTO(l, new LessonDTO()))
                 .toList();
     }

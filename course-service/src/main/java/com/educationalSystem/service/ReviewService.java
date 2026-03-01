@@ -26,17 +26,17 @@ public class ReviewService {
     private final ReviewMapper reviewMapper;
 
     public List<ReviewDTO> getReviewsByCourse(Long courseId) {
-        return reviewRepository.findByCourse_CourseId(courseId).stream()
+        return reviewRepository.findByCourseCourseId(courseId).stream()
                 .map(r -> reviewMapper.mapToDTO(r, new ReviewDTO()))
                 .toList();
     }
 
     @Transactional
     public ReviewDTO submitReview(ReviewDTO dto) {
-        if (!enrollmentRepository.existsByStudent_IdAndCourse_CourseId(dto.getStudentId(), dto.getCourseId())) {
+        if (!enrollmentRepository.existsByStudentIdAndCourseCourseId(dto.getStudentId(), dto.getCourseId())) {
             throw new BusinessException("You must be enrolled in the course to leave a review");
         }
-        if (reviewRepository.existsByStudent_IdAndCourse_CourseId(dto.getStudentId(), dto.getCourseId())) {
+        if (reviewRepository.existsByStudentIdAndCourseCourseId(dto.getStudentId(), dto.getCourseId())) {
             throw new BusinessException("You have already reviewed this course");
         }
         if (dto.getRating() < 1 || dto.getRating() > 5) {

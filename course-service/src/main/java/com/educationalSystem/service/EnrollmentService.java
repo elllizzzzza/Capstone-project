@@ -26,20 +26,20 @@ public class EnrollmentService {
     private final LessonRepository lessonRepository;
 
     public List<EnrollmentDTO> getEnrollmentsByStudent(Long studentId) {
-        return enrollmentRepository.findByStudent_Id(studentId).stream()
+        return enrollmentRepository.findByStudentId(studentId).stream()
                 .map(e -> enrollmentMapper.mapToDTO(e, new EnrollmentDTO()))
                 .toList();
     }
 
     public List<EnrollmentDTO> getEnrollmentsByCourse(Long courseId) {
-        return enrollmentRepository.findByCourse_CourseId(courseId).stream()
+        return enrollmentRepository.findByCourseCourseId(courseId).stream()
                 .map(e -> enrollmentMapper.mapToDTO(e, new EnrollmentDTO()))
                 .toList();
     }
 
     @Transactional
     public EnrollmentDTO enroll(Long studentId, Long courseId) {
-        if (enrollmentRepository.existsByStudent_IdAndCourse_CourseId(studentId, courseId)) {
+        if (enrollmentRepository.existsByStudentIdAndCourseCourseId(studentId, courseId)) {
             throw new BusinessException("Student already enrolled in this course");
         }
 
@@ -67,7 +67,7 @@ public class EnrollmentService {
     @Transactional
     public EnrollmentDTO markLessonCompleted(Long studentId, Long courseId, Long lessonId) {
         Enrollment enrollment = enrollmentRepository
-                .findByStudent_IdAndCourse_CourseId(studentId, courseId)
+                .findByStudentIdAndCourseCourseId(studentId, courseId)
                 .orElseThrow(() -> new BusinessException("Student is not enrolled in this course"));
 
         Progress progress = enrollment.getProgress();
@@ -82,7 +82,7 @@ public class EnrollmentService {
 
             progress.getCompletedLessons().add(lesson);
 
-            int total = lessonRepository.countByCourse_CourseId(courseId);
+            int total = lessonRepository.countByCourseCourseId(courseId);
             int completed = progress.getCompletedLessons().size();
             progress.setCompletionRate(total > 0 ? (double) completed / total * 100 : 0);
             progressRepository.save(progress);

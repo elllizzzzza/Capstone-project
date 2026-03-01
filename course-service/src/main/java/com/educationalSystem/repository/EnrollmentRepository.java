@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
-    List<Enrollment> findByStudent_Id(Long studentId);
-    List<Enrollment> findByCourse_CourseId(Long courseId);
-    Optional<Enrollment> findByStudent_IdAndCourse_CourseId(Long studentId, Long courseId);
-    boolean existsByStudent_IdAndCourse_CourseId(Long studentId, Long courseId);
+    List<Enrollment> findByStudentId(Long studentId);
+    List<Enrollment> findByCourseCourseId(Long courseId);
+    Optional<Enrollment> findByStudentIdAndCourseCourseId(Long studentId, Long courseId);
+    boolean existsByStudentIdAndCourseCourseId(Long studentId, Long courseId);
 }
