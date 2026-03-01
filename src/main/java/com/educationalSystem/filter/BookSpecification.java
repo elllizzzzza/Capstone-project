@@ -24,14 +24,14 @@ public class BookSpecification {
 
     public static Specification<Book> authorContains(String author) {
         return (root, query, cb) ->
-                author == null ? null
+                (author == null || author.isBlank()) ? null
                         : cb.like(cb.lower(root.get("author")),
                         "%" + author.toLowerCase() + "%");
     }
 
     public static Specification<Book> titleContains(String title) {
         return (root, query, cb) ->
-                title == null ? null
+                (title == null || title.isBlank()) ? null
                         : cb.like(cb.lower(root.get("title")),
                         "%" + title.toLowerCase() + "%");
     }

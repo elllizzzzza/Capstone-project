@@ -14,14 +14,14 @@ public class CourseSpecification {
 
     public static Specification<Course> courseNameContains(String name) {
         return (root, query, cb) ->
-                name == null ? null
+                (name == null || name.isBlank()) ? null
                         : cb.like(cb.lower(root.get("courseName")),
                         "%" + name.toLowerCase() + "%");
     }
 
     public static Specification<Course> categoryContains(String category) {
         return (root, query, cb) ->
-                category == null ? null
+                (category == null || category.isBlank()) ? null
                         : cb.like(cb.lower(root.get("category")),
                         "%" + category.toLowerCase() + "%");
     }
@@ -46,7 +46,6 @@ public class CourseSpecification {
 
     public static Specification<Course> fromFilter(CourseFilter filter) {
         return Specification.allOf(
-                courseNameContains(filter.getCourseName()),
                 courseNameContains(filter.getCourseName()),
                 categoryContains(filter.getCategory()),
                 typeIn(filter.getType()),
