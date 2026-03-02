@@ -1,0 +1,176 @@
+services:
+
+  # =================== DATABASES ===================
+
+  postgres-user:
+    image: postgres:15
+    container_name: postgres-user
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-course:
+    image: postgres:15
+    container_name: postgres-course
+    environment:
+      POSTGRES_DB: course_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-course-data:/var/lib/postgresql/data
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-library:
+    image: postgres:15
+    container_name: postgres-library
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-library-data:/var/lib/postgresql/data
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-room:
+    image: postgres:15
+    container_name: postgres-room
+    environment:
+      POSTGRES_DB: room_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-room-data:/var/lib/postgresql/data
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =================== SERVICES ===================
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres-user
+      DB_USER: postgres
+      DB_PASS: postgres
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - educational-network
+    restart: on-failure
+
+  course-service:
+    build:
+      context: .
+      dockerfile: course-service/Dockerfile
+    container_name: course-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: postgres-course
+      DB_USER: postgres
+      DB_PASS: postgres
+      USER_SERVICE_URL: http://user-service:8081
+    depends_on:
+      postgres-course:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    networks:
+      - educational-network
+    restart: on-failure
+
+  library-service:
+    build:
+      context: .
+      dockerfile: library-service/Dockerfile
+    container_name: library-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: postgres-library
+      DB_USER: postgres
+      DB_PASS: postgres
+      USER_SERVICE_URL: http://user-service:8081
+    depends_on:
+      postgres-library:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    networks:
+      - educational-network
+    restart: on-failure
+
+  room-service:
+    build:
+      context: .
+      dockerfile: room-service/Dockerfile
+    container_name: room-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: postgres-room
+      DB_USER: postgres
+      DB_PASS: postgres
+      USER_SERVICE_URL: http://user-service:8081
+    depends_on:
+      postgres-room:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    networks:
+      - educational-network
+    restart: on-failure
+
+# =================== VOLUMES ===================
+
+volumes:
+  postgres-user-data:
+  postgres-course-data:
+  postgres-library-data:
+  postgres-room-data:
+
+# =================== NETWORKS ===================
+
+networks:
+  educational-network:
+    driver: bridge

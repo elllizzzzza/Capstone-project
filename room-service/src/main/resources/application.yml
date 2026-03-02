@@ -1,0 +1,18 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: room-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/room_db
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
