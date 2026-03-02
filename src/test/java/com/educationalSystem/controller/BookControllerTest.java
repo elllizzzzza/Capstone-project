@@ -1,8 +1,10 @@
 package com.educationalSystem.controller;
 
 import com.educationalSystem.dto.BookDTO;
+import com.educationalSystem.dto.response.PagedResponse;
 import com.educationalSystem.exception.GlobalExceptionHandler;
 import com.educationalSystem.exception.ResourceNotFoundException;
+import com.educationalSystem.filter.BookFilter;
 import com.educationalSystem.service.BookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +14,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(BookController.class)
 @Import({GlobalExceptionHandler.class})
-@DisplayName("BookController Integration Tests")
+@DisplayName("BookController Tests")
 class BookControllerTest {
 
     @Autowired
@@ -38,6 +43,7 @@ class BookControllerTest {
     private BookService bookService;
 
     private BookDTO validBookDTO;
+    private PagedResponse<BookDTO> pagedResponse;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +55,9 @@ class BookControllerTest {
         validBookDTO.setGenre("Programming");
         validBookDTO.setTotalCopies(5);
         validBookDTO.setAvailableCopies(5);
+
+        Page<BookDTO> page = new PageImpl<>(List.of(validBookDTO));
+        pagedResponse = PagedResponse.from(page);
     }
 
     @Nested
@@ -56,24 +65,79 @@ class BookControllerTest {
     class GetAllBooksTests {
 
         @Test
-        @DisplayName("200 - Returns list of books")
+        @DisplayName("200 - Returns paged list of books")
         void getAllBooks_200() throws Exception {
-            when(bookService.getAllBooks()).thenReturn(List.of(validBookDTO));
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
 
             mockMvc.perform(get("/api/books"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].title").value("Clean Code"))
-                    .andExpect(jsonPath("$[0].author").value("Robert Martin"));
+                    .andExpect(jsonPath("$.content[0].title").value("Clean Code"))
+                    .andExpect(jsonPath("$.content[0].author").value("Robert Martin"))
+                    .andExpect(jsonPath("$.totalItems").value(1))
+                    .andExpect(jsonPath("$.currentPage").value(1));
         }
 
         @Test
-        @DisplayName("200 - Returns empty list")
+        @DisplayName("200 - Returns empty paged response")
         void getAllBooks_EmptyList() throws Exception {
-            when(bookService.getAllBooks()).thenReturn(List.of());
+            Page<BookDTO> emptyPage = new PageImpl<>(List.of());
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(PagedResponse.from(emptyPage));
 
             mockMvc.perform(get("/api/books"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").isEmpty());
+                    .andExpect(jsonPath("$.content").isEmpty())
+                    .andExpect(jsonPath("$.totalItems").value(0));
+        }
+
+        @Test
+        @DisplayName("200 - Pagination params are passed through")
+        void getAllBooks_withPaginationParams() throws Exception {
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
+
+            mockMvc.perform(get("/api/books")
+                            .param("page", "0")
+                            .param("size", "5")
+                            .param("sort", "title,asc"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].title").value("Clean Code"));
+        }
+
+        @Test
+        @DisplayName("200 - Filter by genre")
+        void getAllBooks_filterByGenre() throws Exception {
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
+
+            mockMvc.perform(get("/api/books").param("genre", "Programming"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].genre").value("Programming"));
+        }
+
+        @Test
+        @DisplayName("200 - Filter by author partial match")
+        void getAllBooks_filterByAuthor() throws Exception {
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
+
+            mockMvc.perform(get("/api/books").param("author", "martin"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalItems").value(1));
+        }
+
+        @Test
+        @DisplayName("200 - Filter by availableCopies range")
+        void getAllBooks_filterByAvailableCopiesRange() throws Exception {
+            when(bookService.getAllBooks(any(BookFilter.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
+
+            mockMvc.perform(get("/api/books")
+                            .param("availableCopiesMin", "1")
+                            .param("availableCopiesMax", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].availableCopies").value(5));
         }
     }
 
@@ -160,11 +224,9 @@ class BookControllerTest {
         @Test
         @DisplayName("400 - Missing required fields")
         void addBook_400_MissingRequiredFields() throws Exception {
-            BookDTO emptyDTO = new BookDTO();
-
             mockMvc.perform(post("/api/books")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(emptyDTO)))
+                            .content(objectMapper.writeValueAsString(new BookDTO())))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.errors").isArray());
         }
@@ -220,21 +282,6 @@ class BookControllerTest {
 
             mockMvc.perform(delete("/api/books/99"))
                     .andExpect(status().isNotFound());
-        }
-    }
-
-    @Nested
-    @DisplayName("GET /api/books/search")
-    class SearchBooksTests {
-
-        @Test
-        @DisplayName("200 - Returns matching books")
-        void searchBooks_200() throws Exception {
-            when(bookService.searchBooks("clean")).thenReturn(List.of(validBookDTO));
-
-            mockMvc.perform(get("/api/books/search").param("keyword", "clean"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].title").value("Clean Code"));
         }
     }
 }

@@ -1,8 +1,13 @@
 package com.educationalSystem.controller;
 
 import com.educationalSystem.dto.BookDTO;
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.BookFilter;
 import com.educationalSystem.service.BookService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +23,8 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public ResponseEntity<List<BookDTO>> getAllBooks() {
-        return ResponseEntity.ok(bookService.getAllBooks());
+    public ResponseEntity<PagedResponse<BookDTO>> getAllBooks(@ModelAttribute BookFilter filter, @PageableDefault(size = 10, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(bookService.getAllBooks(filter, pageable));
     }
 
     @GetMapping("/{id}")

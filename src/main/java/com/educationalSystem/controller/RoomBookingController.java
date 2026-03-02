@@ -1,8 +1,13 @@
 package com.educationalSystem.controller;
 
 import com.educationalSystem.dto.RoomBookingDTO;
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.RoomBookingFilter;
 import com.educationalSystem.service.RoomBookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +23,8 @@ public class RoomBookingController {
     private final RoomBookingService bookingService;
 
     @GetMapping
-    public ResponseEntity<List<RoomBookingDTO>> getAllBookings() {
-        return ResponseEntity.ok(bookingService.getAllBookings());
+    public ResponseEntity<PagedResponse<RoomBookingDTO>> getAllBookings(@ModelAttribute RoomBookingFilter filter, @PageableDefault(size = 10, sort = "date", direction = Sort.Direction.DESC)Pageable pageable) {
+        return ResponseEntity.ok(bookingService.getAllBookings(filter, pageable));
     }
 
     @GetMapping("/student/{studentId}")

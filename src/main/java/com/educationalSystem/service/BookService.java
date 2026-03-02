@@ -1,11 +1,15 @@
 package com.educationalSystem.service;
 
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.BookFilter;
+import com.educationalSystem.filter.BookSpecification;
 import com.educationalSystem.mapper.BookMapper;
 import com.educationalSystem.dto.BookDTO;
 import com.educationalSystem.entity.parts.Book;
 import com.educationalSystem.exception.ResourceNotFoundException;
 import com.educationalSystem.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +22,15 @@ public class BookService {
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
 
-    public List<BookDTO> getAllBooks() {
-        return bookRepository.findAll().stream()
-                .map(b -> bookMapper.convertToDTO(b, new BookDTO()))
-                .toList();
+    public PagedResponse<BookDTO> getAllBooks(BookFilter filter, Pageable pageable) {
+        return PagedResponse.from(
+                bookRepository.findAll(BookSpecification.fromFilter(filter), pageable)
+                        .map(b -> bookMapper.convertToDTO(b, new BookDTO()))
+        );
     }
 
     public BookDTO getBookById(Long id) {
-        Book book = findOrThrow(id);
-        return bookMapper.convertToDTO(book, new BookDTO());
+        return bookMapper.convertToDTO(findOrThrow(id), new BookDTO());
     }
 
     public List<BookDTO> searchBooks(String keyword) {

@@ -1,5 +1,8 @@
 package com.educationalSystem.service;
 
+import com.educationalSystem.dto.response.PagedResponse;
+import com.educationalSystem.filter.RoomBookingFilter;
+import com.educationalSystem.filter.RoomBookingSpecification;
 import com.educationalSystem.mapper.RoomBookingMapper;
 import com.educationalSystem.dto.RoomBookingDTO;
 import com.educationalSystem.entity.parts.Room;
@@ -11,6 +14,7 @@ import com.educationalSystem.exception.BusinessException;
 import com.educationalSystem.exception.ResourceNotFoundException;
 import com.educationalSystem.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,10 +43,11 @@ public class RoomBookingService {
                 .toList();
     }
 
-    public List<RoomBookingDTO> getAllBookings() {
-        return bookingRepository.findAll().stream()
-                .map(b -> bookingConverter.convertToDTO(b, new RoomBookingDTO()))
-                .toList();
+    public PagedResponse<RoomBookingDTO> getAllBookings(RoomBookingFilter filter, Pageable pageable) {
+        return PagedResponse.from(
+                bookingRepository.findAll(RoomBookingSpecification.fromFilter(filter), pageable)
+                        .map(b -> bookingConverter.convertToDTO(b, new RoomBookingDTO()))
+        );
     }
 
     @Transactional
