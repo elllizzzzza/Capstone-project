@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres-user-data:/var/lib/postgresql/data
     networks:
@@ -29,7 +29,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres-course-data:/var/lib/postgresql/data
     networks:
@@ -48,7 +48,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5434:5432"
+      - "5436:5432"
     volumes:
       - postgres-library-data:/var/lib/postgresql/data
     networks:
@@ -78,6 +78,23 @@ services:
       timeout: 5s
       retries: 5
 
+  # =================== EUREKA ===================
+
+  discovery-service:
+    build:
+      context: .
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   # =================== SERVICES ===================
 
   user-service:
@@ -91,8 +108,11 @@ services:
       DB_HOST: postgres-user
       DB_USER: postgres
       DB_PASS: postgres
+      EUREKA_URL: http://discovery-service:8761/eureka/
     depends_on:
       postgres-user:
+        condition: service_healthy
+      discovery-service:
         condition: service_healthy
     networks:
       - educational-network
@@ -109,12 +129,12 @@ services:
       DB_HOST: postgres-course
       DB_USER: postgres
       DB_PASS: postgres
-      USER_SERVICE_URL: http://user-service:8081
+      EUREKA_URL: http://discovery-service:8761/eureka/
     depends_on:
       postgres-course:
         condition: service_healthy
-      user-service:
-        condition: service_started
+      discovery-service:
+        condition: service_healthy
     networks:
       - educational-network
     restart: on-failure
@@ -130,12 +150,12 @@ services:
       DB_HOST: postgres-library
       DB_USER: postgres
       DB_PASS: postgres
-      USER_SERVICE_URL: http://user-service:8081
+      EUREKA_URL: http://discovery-service:8761/eureka/
     depends_on:
       postgres-library:
         condition: service_healthy
-      user-service:
-        condition: service_started
+      discovery-service:
+        condition: service_healthy
     networks:
       - educational-network
     restart: on-failure
@@ -151,25 +171,21 @@ services:
       DB_HOST: postgres-room
       DB_USER: postgres
       DB_PASS: postgres
-      USER_SERVICE_URL: http://user-service:8081
+      EUREKA_URL: http://discovery-service:8761/eureka/
     depends_on:
       postgres-room:
         condition: service_healthy
-      user-service:
-        condition: service_started
+      discovery-service:
+        condition: service_healthy
     networks:
       - educational-network
     restart: on-failure
-
-# =================== VOLUMES ===================
 
 volumes:
   postgres-user-data:
   postgres-course-data:
   postgres-library-data:
   postgres-room-data:
-
-# =================== NETWORKS ===================
 
 networks:
   educational-network:

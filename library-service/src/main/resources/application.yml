@@ -17,6 +17,13 @@ services:
   user-service:
     url: ${USER_SERVICE_URL:http://localhost:8081}
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+    instance:
+      prefer-ip-address: true
+
 app:
   book:
     categories: Fiction-NonFiction-Science-History-Technology-Art-Mathematics
