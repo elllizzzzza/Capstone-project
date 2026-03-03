@@ -15,6 +15,7 @@
         <module>course-service</module>
         <module>library-service</module>
         <module>room-service</module>
+        <module>discovery-service</module>
     </modules>
 
     <parent>

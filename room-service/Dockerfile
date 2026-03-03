@@ -2,11 +2,11 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 RUN mvn install -N -DskipTests
-COPY course-service/pom.xml course-service/
-COPY course-service/src course-service/src
-RUN mvn clean package -DskipTests -f course-service/pom.xml
+COPY room-service/pom.xml room-service/
+COPY room-service/src room-service/src
+RUN mvn clean package -DskipTests -f room-service/pom.xml
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/course-service/target/*.jar app.jar
+COPY --from=build /app/room-service/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
