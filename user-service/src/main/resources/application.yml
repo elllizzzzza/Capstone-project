@@ -12,6 +12,12 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  logging:
+    level:
+      root: WARN
+      com.educationalSystem: INFO
+      org.hibernate.SQL: OFF
+      org.springframework.web: WARN
 
 eureka:
   client:

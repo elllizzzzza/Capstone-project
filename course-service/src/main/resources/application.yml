@@ -12,10 +12,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  cloud:
+    loadbalancer:
+      cache:
+        enabled: false
 logging:
   level:
-    com.educationalSystem: DEBUG
-    org.springframework.cloud.loadbalancer: DEBUG
+    root: WARN
+    com.educationalSystem: INFO
+    org.hibernate.SQL: OFF
+    org.springframework.web: WARN
 
 eureka:
   client:
@@ -23,4 +29,3 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
     instance:
       prefer-ip-address: true
-
