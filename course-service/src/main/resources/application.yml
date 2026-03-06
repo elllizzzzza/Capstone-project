@@ -12,10 +12,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-
-services:
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
+logging:
+  level:
+    com.educationalSystem: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
 
 eureka:
   client:
@@ -23,3 +23,4 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
     instance:
       prefer-ip-address: true
+
