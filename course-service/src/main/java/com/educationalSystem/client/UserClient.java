@@ -1,7 +1,12 @@
 package com.educationalSystem.client;
 
+import com.educationalSystem.exception.ResourceNotFoundException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -9,6 +14,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @Component
 @RequiredArgsConstructor
 public class UserClient {
+
+    private static final Logger log = LoggerFactory.getLogger(UserClient.class);
 
     private final WebClient.Builder webClientBuilder;
     private WebClient webClient;
@@ -18,8 +25,10 @@ public class UserClient {
         this.webClient = webClientBuilder.build();
     }
 
+    @CircuitBreaker(name = "user-service", fallbackMethod = "userExistsFallback")
+    @Retry(name = "user-service")
     public boolean userExists(Long userId) {
-        System.out.println(">>> [course-service] Calling user-service for userId: " + userId);
+        log.info("Calling user-service for userId: {}", userId);
         try {
             webClient
                     .get()
@@ -29,10 +38,19 @@ public class UserClient {
                     .block();
             return true;
         } catch (WebClientResponseException.NotFound e) {
-            return false;
+            throw new ResourceNotFoundException("User not found: " + userId);
+        } catch (WebClientResponseException e) {
+            log.warn("user-service returned error: {}", e.getStatusCode());
+            throw e;
         } catch (Exception e) {
-            System.err.println(">>> UserClient FAILED: " + e.getClass().getName() + " - " + e.getMessage());
+            log.warn("Failed to reach user-service: {}", e.getMessage());
             throw new RuntimeException("Cannot reach user-service", e);
         }
+    }
+
+    private boolean userExistsFallback(Long userId, Throwable t) {
+        log.error("Circuit breaker fallback for userId: {}. Reason: {}", userId, t.getMessage());
+        throw new RuntimeException(
+                "User service is currently unavailable. Please try again later.", t);
     }
 }

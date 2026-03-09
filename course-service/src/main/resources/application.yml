@@ -11,21 +11,63 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
   cloud:
     loadbalancer:
       cache:
         enabled: false
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 50
+        register-health-indicator: true
+  retry:
+    instances:
+      user-service:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.lang.RuntimeException
+        ignore-exceptions:
+          - com.educationalSystem.exception.ResourceNotFoundException
+  timelimiter:
+    instances:
+      user-service:
+        timeout-duration: 3s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, circuitbreakers, retries
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
 logging:
   level:
     root: WARN
     com.educationalSystem: INFO
     org.hibernate.SQL: OFF
     org.springframework.web: WARN
+    io.github.resilience4j: INFO
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
-    instance:
-      prefer-ip-address: true
+  instance:
+    prefer-ip-address: true
