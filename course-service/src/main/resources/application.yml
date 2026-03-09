@@ -45,26 +45,6 @@ resilience4j:
       user-service:
         timeout-duration: 3s
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, circuitbreakers, retries
-  endpoint:
-    health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-
-logging:
-  level:
-    root: WARN
-    com.educationalSystem: INFO
-    org.hibernate.SQL: OFF
-    org.springframework.web: WARN
-    io.github.resilience4j: INFO
-
 eureka:
   client:
     service-url:
@@ -74,4 +54,36 @@ eureka:
 
 jwt:
   secret: "your-256-bit-secret-your-256-bit-secret"
-  expiration: 86400000  # 24 hours
+  expiration: 86400000
+
+logging:
+  level:
+    root: WARN
+    com.educationalSystem: INFO
+    org.hibernate.SQL: OFF
+    org.springframework.web: WARN
+    io.github.resilience4j: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+logstash:
+  host: ${LOGSTASH_HOST:localhost}
+  port: ${LOGSTASH_PORT:5000}

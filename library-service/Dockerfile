@@ -2,6 +2,9 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 RUN mvn install -N -DskipTests
+COPY shared-security/pom.xml shared-security/
+COPY shared-security/src shared-security/src
+RUN mvn install -DskipTests -f shared-security/pom.xml
 COPY library-service/pom.xml library-service/
 COPY library-service/src library-service/src
 RUN mvn clean package -DskipTests -f library-service/pom.xml

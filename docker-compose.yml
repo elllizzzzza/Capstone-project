@@ -109,11 +109,15 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       EUREKA_URL: http://discovery-service:8761/eureka/
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5000
     depends_on:
       postgres-user:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - educational-network
     restart: on-failure
@@ -130,11 +134,15 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       EUREKA_URL: http://discovery-service:8761/eureka/
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5000
     depends_on:
       postgres-course:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - educational-network
     restart: on-failure
@@ -151,11 +159,15 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       EUREKA_URL: http://discovery-service:8761/eureka/
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5000
     depends_on:
       postgres-library:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - educational-network
     restart: on-failure
@@ -172,21 +184,28 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       EUREKA_URL: http://discovery-service:8761/eureka/
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5000
     depends_on:
       postgres-room:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - educational-network
     restart: on-failure
 
   gateway-service:
-    build: ./gateway-service
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
     ports:
       - "8080:8080"
     environment:
-      - EUREKA_URL=http://discovery-service:8761/eureka
+      EUREKA_URL: http://discovery-service:8761/eureka/
     depends_on:
       - discovery-service
       - user-service
@@ -194,13 +213,106 @@ services:
       - library-service
       - room-service
     networks:
-      - app-network
+      - educational-network
+
+  # =================== ELK STACK ===================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - educational-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.0
+    container_name: logstash
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - educational-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - educational-network
+
+  # =================== METRICS ===================
+
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - educational-network
+
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - educational-network
+
+  # =================== TRACES ===================
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - educational-network
+
+# =================== VOLUMES ===================
 
 volumes:
   postgres-user-data:
   postgres-course-data:
   postgres-library-data:
   postgres-room-data:
+  elasticsearch-data:
+  grafana-data:
+
+# =================== NETWORKS ===================
 
 networks:
   educational-network:
