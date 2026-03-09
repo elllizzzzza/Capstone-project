@@ -12,10 +12,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-
-services:
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
+  cloud:
+    loadbalancer:
+      cache:
+        enabled: false
+logging:
+  level:
+    root: WARN
+    com.educationalSystem: INFO
+    org.hibernate.SQL: OFF
+    org.springframework.web: WARN
 
 eureka:
   client:

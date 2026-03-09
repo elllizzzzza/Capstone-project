@@ -12,10 +12,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-
-services:
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
+  logging:
+    level:
+      org.springframework.cloud.loadbalancer: DEBUG
 
 eureka:
   client:

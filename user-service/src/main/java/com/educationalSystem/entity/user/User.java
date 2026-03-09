@@ -31,7 +31,7 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(insertable = false, updatable = false)
+    @Column(name = "role", insertable = false, updatable = false)
     private Role role;
 
     private boolean active = true;
