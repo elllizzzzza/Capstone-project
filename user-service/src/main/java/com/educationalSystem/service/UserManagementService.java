@@ -28,17 +28,16 @@ public class UserManagementService {
         return userMapper.mapToDTO(findOrThrow(id), new UserDTO());
     }
 
-    @Transactional
-    public void deleteUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
-
-        userRepository.delete(user);
+    public UserDTO getUserByUsername(String username) {       // ← NEW
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User not found: " + username));
+        return userMapper.mapToDTO(user, new UserDTO());
     }
 
-    private User findOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+    @Transactional
+    public void deleteUser(Long id) {
+        userRepository.delete(findOrThrow(id));
     }
 
     @Transactional
@@ -53,5 +52,10 @@ public class UserManagementService {
         User user = findOrThrow(id);
         user.setActive(true);
         userRepository.save(user);
+    }
+
+    private User findOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
     }
 }

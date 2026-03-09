@@ -26,3 +26,7 @@ eureka:
 app:
   book:
     categories: Fiction-NonFiction-Science-History-Technology-Art-Mathematics
+
+jwt:
+  secret: "your-256-bit-secret-your-256-bit-secret"
+  expiration: 86400000  # 24 hours
