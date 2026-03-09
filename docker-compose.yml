@@ -181,6 +181,21 @@ services:
       - educational-network
     restart: on-failure
 
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_URL=http://discovery-service:8761/eureka
+    depends_on:
+      - discovery-service
+      - user-service
+      - course-service
+      - library-service
+      - room-service
+    networks:
+      - app-network
+
 volumes:
   postgres-user-data:
   postgres-course-data:

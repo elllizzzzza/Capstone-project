@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # User Service
+        - id: user-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-admin
+          uri: lb://user-service
+          predicates:
+            - Path=/api/admin/**
+
+        - id: user-internal
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        # Course Service
+        - id: course-service
+          uri: lb://course-service
+          predicates:
+            - Path=/api/courses/**, /api/lessons/**, /api/enrollments/**
+
+        # Library Service
+        - id: library-service
+          uri: lb://library-service
+          predicates:
+            - Path=/api/books/**, /api/borrowings/**
+
+        # Room Service
+        - id: room-service
+          uri: lb://room-service
+          predicates:
+            - Path=/api/rooms/**, /api/bookings/**
+
+  load balancer:
+    cache:
+      enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.educationalSystem: INFO
+    org.springframework.cloud.gateway: INFO
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
