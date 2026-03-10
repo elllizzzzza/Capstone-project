@@ -5,10 +5,10 @@ import com.educationalSystem.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,8 +20,15 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        System.out.println(">>> Request received on port: " +
-                environment.getProperty("server.port"));
+        System.out.println(">>> Request on port: " + environment.getProperty("server.port"));
         return ResponseEntity.ok(userManagementService.getUserById(id));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getMyProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails.getUsername(); // always safe
+        System.out.println("Authenticated username: " + username);
+        UserDTO user = userManagementService.getUserByUsername(username);
+        return ResponseEntity.ok(user);
     }
 }
