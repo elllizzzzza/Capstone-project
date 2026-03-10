@@ -11,17 +11,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-  logging:
-    level:
-      org.springframework.cloud.loadbalancer: DEBUG
+    show-sql: false
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
-    instance:
-      prefer-ip-address: true
+  instance:
+    prefer-ip-address: true
 
 app:
   book:
@@ -29,4 +26,30 @@ app:
 
 jwt:
   secret: "your-256-bit-secret-your-256-bit-secret"
-  expiration: 86400000  # 24 hours
+  expiration: 86400000
+
+logging:
+  level:
+    root: WARN
+    com.educationalSystem: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+logstash:
+  host: ${LOGSTASH_HOST:localhost}
+  port: ${LOGSTASH_PORT:5000}

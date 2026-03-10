@@ -25,6 +25,8 @@ public class RoomSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers("/actuator/**").permitAll()
+
                         // Rooms
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**")
                         .hasAnyRole("STUDENT", "INSTRUCTOR", "LIBRARIAN", "ADMINISTRATOR")

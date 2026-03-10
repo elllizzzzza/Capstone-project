@@ -24,6 +24,8 @@ public class CourseSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers("/actuator/**").permitAll()
+
                         //Courses
                         .requestMatchers(HttpMethod.GET, "/api/courses/**")
                         .hasAnyRole("STUDENT", "INSTRUCTOR", "LIBRARIAN", "ADMINISTRATOR")

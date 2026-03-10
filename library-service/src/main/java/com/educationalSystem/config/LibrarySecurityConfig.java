@@ -24,6 +24,8 @@ public class LibrarySecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers("/actuator/**").permitAll()
+
                         // Books
                         .requestMatchers(HttpMethod.GET, "/api/books/**")
                         .hasAnyRole("STUDENT", "INSTRUCTOR", "LIBRARIAN", "ADMINISTRATOR")
